@@ -148,6 +148,46 @@ body {
   box-shadow: 0 16px 48px 0 #6366f1cc, 0 3px 16px 0 #06b6d4cc;
 }
 
+/* Fix for terminal-mockup overflow and responsiveness */
+.terminal-mockup {
+  max-width: 100%;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+  word-break: break-word;
+  white-space: pre-line;
+  min-height: 300px;
+  max-height: 70vh;
+  background-clip: padding-box;
+}
+
+.terminal-mockup .terminal-output {
+  max-width: 100%;
+  overflow-x: auto;
+  word-break: break-word;
+  white-space: pre-line;
+}
+
+@media (max-width: 768px) {
+  .terminal-mockup {
+    max-width: 100vw !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 0.95rem !important;
+    padding: 0.5rem !important;
+    max-height: 50vh !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .terminal-mockup {
+    font-size: 0.85rem !important;
+    padding: 0.3rem !important;
+    max-height: 35vh !important;
+  }
+}
+
 /* Notification override for Tailwind */
 .notification {
   /* Tailwind handles most, but keep fade-in/fade-out for JS */
