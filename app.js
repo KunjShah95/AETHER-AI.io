@@ -193,63 +193,43 @@ function scrollToSection(sectionId) {
 function downloadFile(os) {
     let url = '';
     let filename = '';
-    let fallbackUrl = '';
-    
     if (os === 'Windows') {
-        url = './terminal/install_windows.zip';
+        url = 'https://kunjshah95.github.io/NEXUS-AI.io/terminal/install_windows.zip';
         filename = 'nexus-ai-installer-windows.zip';
-        fallbackUrl = 'https://github.com/KunjShah95/NEXUS-AI.io/raw/main/terminal/install.bat';
     } else if (os === 'Linux') {
-        url = './terminal/install_linux.zip';
+        url = 'https://kunjshah95.github.io/NEXUS-AI.io/terminal/install_linux.zip';
         filename = 'nexus-ai-installer-linux.zip';
-        fallbackUrl = 'https://github.com/KunjShah95/NEXUS-AI.io/raw/main/terminal/install.sh';
     } else if (os === 'macOS') {
-        url = './terminal/install_mac.zip';
+        url = 'https://kunjshah95.github.io/NEXUS-AI.io/terminal/install_mac.zip';
         filename = 'nexus-ai-installer-mac.zip';
-        fallbackUrl = 'https://github.com/KunjShah95/NEXUS-AI.io/raw/main/terminal/install_mac.sh';
     }
-    
-    if (!url) return;
-    
-    // Primary download attempt (local ZIP file)
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    
-    try {
-        a.click();
-        incrementDownloadCount();
-        showNotification(`✅ ${filename} download started successfully!`);
-        console.log(`Download initiated for ${filename}`);
-    } catch (error) {
-        console.error('Primary download failed, trying fallback:', error);
-        
-        // Fallback: try to download individual installer file
-        const fallbackLink = document.createElement('a');
-        fallbackLink.href = fallbackUrl;
-        fallbackLink.download = `nexus-installer-${os.toLowerCase()}.${fallbackUrl.endsWith('.bat') ? 'bat' : 'sh'}`;
-        fallbackLink.style.display = 'none';
-        document.body.appendChild(fallbackLink);
-        
-        try {
-            fallbackLink.click();
-            incrementDownloadCount();
-            showNotification(`📦 Fallback download initiated for ${os}. Please also download other required files from GitHub.`);
-        } catch (fallbackError) {
-            console.error('Fallback download also failed:', fallbackError);
-            showNotification(`❌ Download failed. Please visit our GitHub repository: https://github.com/KunjShah95/NEXUS-AI.io`);
-            // Open GitHub as last resort
-            setTimeout(() => {
-                window.open('https://github.com/KunjShah95/NEXUS-AI.io/tree/main/terminal', '_blank');
-            }, 2000);
-        }
-        
-        document.body.removeChild(fallbackLink);
+    if (url) {
+        // Use fetch to handle download properly
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const a = document.createElement('a');
+                const downloadUrl = window.URL.createObjectURL(blob);
+                a.href = downloadUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(downloadUrl);
+                // Only increment after successful download
+                incrementDownloadCount();
+                showNotification(`✅ ${filename} downloaded successfully!`);
+            })
+            .catch(error => {
+                console.error('Download failed:', error);
+                showNotification(`❌ Download failed. Please try again or visit our GitHub repository.`);
+            });
     }
-    
-    document.body.removeChild(a);
 }
 
 function openGuide() {
@@ -504,34 +484,13 @@ window.addEventListener('scroll', () => {
 
 // Event Listeners for buttons
 document.addEventListener('DOMContentLoaded', () => {
-    // Handle download buttons
+    document.querySelector('[onclick="startDemo()"]').addEventListener('click', startDemo);
+    document.querySelector('[onclick="openGuide()"]').addEventListener('click', openGuide);
+    document.querySelector('[onclick="openGitHub()"]').addEventListener('click', openGitHub);
     document.querySelectorAll('[onclick^="downloadFile("]').forEach(btn => {
-        const onclickAttr = btn.getAttribute('onclick');
-        if (onclickAttr) {
-            const match = onclickAttr.match(/downloadFile\('([^']+)'\)/);
-            if (match) {
-                const platform = match[1];
-                btn.removeAttribute('onclick'); // Remove inline onclick
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    downloadFile(platform);
-                });
-            }
-        }
+        const platform = btn.getAttribute('onclick').match(/downloadFile\('([^']+)'\)/)[1];
+        btn.addEventListener('click', () => downloadFile(platform));
     });
-    
-    // Handle other buttons
-    const demoBtn = document.querySelector('button[onclick="startDemo()"]');
-    if (demoBtn) {
-        demoBtn.removeAttribute('onclick');
-        demoBtn.addEventListener('click', startDemo);
-    }
-    
-    const downloadNavBtn = document.querySelector('button[onclick="scrollToSection(\'download\')"]');
-    if (downloadNavBtn) {
-        downloadNavBtn.removeAttribute('onclick');
-        downloadNavBtn.addEventListener('click', () => scrollToSection('download'));
-    }
 });
 
 // Smooth Scrolling for anchor links
