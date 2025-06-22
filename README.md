@@ -170,6 +170,46 @@ NEXUS-AI.io/
 
 ---
 
+## 🔮 Roadmap
+
+> **Visual roadmap below uses [Mermaid](https://mermaid-js.github.io/). If you don't see a diagram, view this file on GitHub.com.**
+
+```mermaid
+flowchart TD
+    A([Automated Testing & CI])
+    B([Linting & Code Quality])
+    C([Plugin/Extension System])
+    D([User Configuration File])
+    E([Enhanced Logging])
+    F([Usage Analytics (Opt-in)])
+    G([Accessibility])
+    H([More AI Integrations])
+    I([Export/Import Conversations])
+    J([In-app Update Checker])
+    K([Multi-language Support])
+    L([Theme Customization])
+    M([Mobile App Support])
+    N([Collaboration Features])
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    I --> J
+    J --> K
+    K --> L
+    L --> M
+    M --> N
+```
+
+Have ideas? [Open an issue](https://github.com/KunjShah95/NEXUS-AI.io/issues) or join the discussion!
+
+---
+
 ## 📝 Troubleshooting
 
 <details>
