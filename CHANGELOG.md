@@ -26,6 +26,7 @@
 - 📖 **Environment Template** - Detailed .env.example with comments
 - 📖 **Troubleshooting Guide** - Common issues and solutions
 - 📖 **API Key Setup** - Step-by-step configuration instructions
+- ➕ **Added CONTRIBUTING.md** - New file with detailed contribution, setup, and code of conduct guidelines
 
 ### 🔒 Security & Performance
 - 🛡️ **Enhanced Input Validation** - Better security measures
