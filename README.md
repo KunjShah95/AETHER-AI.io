@@ -96,7 +96,267 @@ python main.py
 
 ---
 
-## 🧠 AI Model Switching
+## 📖 Advanced Usage Guide
+
+### � Interactive Development
+
+**Code Generation:**
+
+```bash
+/generate function calculate_fibonacci
+/generate class UserManager
+/generate module database_utils
+```
+
+**Code Review:**
+
+```bash
+/review my_code.py
+/review --style pep8
+/review --security
+```
+
+**Debugging:**
+
+```bash
+/debug error_message
+/debug --trace
+/debug --suggest
+```
+
+### �🧠 Advanced AI Features
+
+**Context-Aware Commands:**
+
+```bash
+/learn pattern recursion
+/suggest optimization
+/remind deadline
+/analyze project
+```
+
+**Model Switching:**
+
+```bash
+/switch gemini
+/switch groq
+/switch ollama
+/status
+```
+
+### 🎮 Games & Learning
+
+**Coding Challenges:**
+
+```bash
+/challenge python
+/challenge --difficulty hard
+/challenge --topic algorithms
+```
+
+**Tutorials:**
+
+```bash
+/tutorial ai_basics
+/tutorial python_advanced
+/tutorial --interactive
+```
+
+**Quizzes:**
+
+```bash
+/quiz programming
+/quiz ai_concepts
+/achievements
+```
+
+### 🎨 Creative Tools
+
+**ASCII Art:**
+
+```bash
+/ascii "Hello World"
+/ascii --style block
+/ascii --width 80
+```
+
+**Color Schemes:**
+
+```bash
+/colors generate
+/colors preview
+/colors export
+```
+
+**Story Generation:**
+
+```bash
+/story adventure
+/story --genre sci-fi
+/story --length short
+```
+
+### 🔒 Security Features
+
+**Encryption:**
+
+```bash
+/encrypt "secret message"
+/decrypt encrypted_text
+/rotate_keys
+```
+
+**Authentication:**
+
+```bash
+/biometric enroll
+/biometric verify
+/threat_scan
+```
+
+### 📊 Analytics & Monitoring
+
+**Usage Tracking:**
+
+```bash
+/analytics dashboard
+/analytics productivity
+/analytics trends
+```
+
+**System Monitoring:**
+
+```bash
+/monitor health
+/monitor network
+/monitor performance
+```
+
+### 🔧 Advanced Commands
+
+**Multi-language Support:**
+
+```bash
+/translate python javascript
+/refactor --language java
+/polyglot analyze
+```
+
+**Collaboration:**
+
+```bash
+/share code_snippet
+/review request
+/workspace create
+```
+
+**External Tools:**
+
+```bash
+/git status
+/docker ps
+/database connect
+```
+
+## ⚙️ Configuration
+
+Create a `config.yaml` file for advanced settings:
+
+```yaml
+# AI Model Configuration
+models:
+  primary: gemini
+  fallback: groq
+  local: ollama
+
+# Security Settings
+security:
+  encryption: enabled
+  key_rotation: 30d
+  threat_detection: enabled
+
+# Analytics
+analytics:
+  enabled: true
+  retention: 90d
+  export_format: json
+
+# Learning
+games:
+  difficulty: medium
+  achievements: enabled
+  tutorials: interactive
+```
+
+## 🔧 Complete Command Reference
+
+| Category | Command | Description |
+|----------|---------|-------------|
+| **Development** | `/generate` | Generate code snippets |
+| | `/review` | Code review and analysis |
+| | `/debug` | Debug assistance |
+| | `/refactor` | Code refactoring |
+| | `/docs` | Documentation generation |
+| **AI** | `/switch` | Switch AI models |
+| | `/learn` | Learn patterns |
+| | `/suggest` | Get suggestions |
+| | `/analyze` | Project analysis |
+| **Creative** | `/ascii` | ASCII art generation |
+| | `/colors` | Color scheme design |
+| | `/story` | Story generation |
+| | `/music` | Music pattern creation |
+| **Games** | `/challenge` | Coding challenges |
+| | `/tutorial` | Interactive tutorials |
+| | `/quiz` | Knowledge quizzes |
+| | `/achievements` | View achievements |
+| **Security** | `/encrypt` | Message encryption |
+| | `/biometric` | Biometric auth |
+| | `/threat_scan` | Security scanning |
+| **Analytics** | `/analytics` | Usage analytics |
+| | `/monitor` | System monitoring |
+| **Tools** | `/git` | Git integration |
+| | `/docker` | Docker commands |
+| | `/database` | Database tools |
+
+## 🎯 Examples
+
+### Generate a Complete Function
+
+```bash
+/generate function def fibonacci(n):
+```
+
+### Create ASCII Art
+
+```bash
+/ascii "NEXUS AI" --style block --width 60
+```
+
+### Start a Coding Challenge
+
+```bash
+/challenge python --difficulty medium --topic data_structures
+```
+
+### Analyze Project
+
+```bash
+/analyze current_project --metrics complexity --output json
+```
+
+### Generate Story
+
+```bash
+/story fantasy --genre adventure --characters hero,mage,dragon --length medium
+```
+
+### Monitor System Health
+
+```bash
+/monitor health --realtime --alerts enabled
+```
+
+---
 
 Switch between any supported provider, including custom Ollama models:
 
@@ -163,16 +423,28 @@ NEXUS-AI.io/
 
 ## 🧩 Advanced Features
 
-- **Contextual Memory**: Persistent context using ChromaDB; never lose your conversation flow.
-- **Rich UI**: ASCII art banners, colored responses, real-time status tables.
-- **System Monitoring**: `/status` shows API health and system performance.
-- **Extensible**: Add new models/providers easily via modular config.
+### 🤖 Interactive Development Environment
+
+- **Code Generation**: Generate complete functions, classes, and modules with `/generate`
+- **Code Review**: Automated code analysis and improvement suggestions with `/review`
+- **Debug Assistant**: Intelligent debugging with `/debug` and error analysis
+- **Refactoring Tools**: Smart code refactoring with `/refactor`
+- **Documentation Generator**: Auto-generate docstrings and comments with `/docs`
+
+### 🧠 Advanced AI Features
+
+- **Context-Aware AI**: Learns from your interactions and provides personalized suggestions
+- **Multi-Model Support**: Switch between Google Gemini, Groq, Ollama, and other providers
+- **Intelligent Code Completion**: Context-aware code suggestions and auto-completion
+- **Pattern Recognition**: Learns coding patterns and applies them to new projects
+- **Task Reminders**: Intelligent task tracking and deadline management
 
 ---
 
 ## 🔮 Roadmap
 
 We’re planning to add:
+
 - Automated Testing & CI
 - Linting & Code Quality
 - Plugin/Extension System

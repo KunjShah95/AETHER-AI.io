@@ -1,19 +1,19 @@
 #!/bin/bash
 
-# NEXUS AI Terminal Assistant - macOS Installer v3.0
-# Enhanced installation script for macOS
+# NEXUS AI Terminal Assistant - Linux Installer v3.0
+# Enhanced installation script for Linux
 
 set -e
 
 echo "=========================================="
 echo "  NEXUS AI Terminal Assistant v3.0"
-echo "  macOS Installation Script"
+echo "  Linux Installation Script"
 echo "=========================================="
 echo
 
-# Check if running on macOS
-if [[ "$OSTYPE" != "darwin"* ]]; then
-    echo "[ERROR] This script is for macOS only"
+# Check if running on Linux
+if [[ "$OSTYPE" != "linux-gnu"* ]]; then
+    echo "[ERROR] This script is for Linux only"
     exit 1
 fi
 
@@ -22,8 +22,10 @@ echo "[1/6] Checking Python installation..."
 if ! command -v python3 &> /dev/null; then
     echo "[ERROR] Python 3 is not installed"
     echo
-    echo "Please install Python 3.8+ from https://python.org"
-    echo "Or use: brew install python"
+    echo "Please install Python 3.8+ using your package manager:"
+    echo "Ubuntu/Debian: sudo apt install python3 python3-pip"
+    echo "CentOS/RHEL: sudo yum install python3 python3-pip"
+    echo "Arch: sudo pacman -S python python-pip"
     echo
     exit 1
 fi

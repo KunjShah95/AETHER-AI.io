@@ -11,6 +11,7 @@ A powerful, multi-model AI terminal assistant supporting Google Gemini, Groq, Ol
 - 🌐 **Web Integration** - Real-time web search capabilities
 - 🎤 **Voice Input** - Hands-free operation support
 - 💾 **Context Memory** - ChromaDB integration for conversation persistence
+- 🚀 **Advanced Features** - Interactive development, testing, API integration, and more!
 
 ## 🚀 Quick Installation
 
@@ -93,6 +94,46 @@ HUGGINGFACE_API_KEY=your_hf_key_here
 - Syntax highlighting and formatting
 - Progress indicators and status updates
 - Error handling with helpful messages
+
+### 🚀 Advanced Features
+
+#### 🛠️ Interactive Development Environment
+- **Code Execution**: `/run-python [code]` - Execute Python code in isolation
+- **Debug Setup**: `/debug [file]` - Set up debugging for Python files
+- **Performance Profiling**: `/profile [file]` - Profile code performance
+- **Code Explanation**: `/explain-code [file]` - AI explains code line by line
+
+#### 🔧 Testing & Quality Assurance
+- **Unit Testing**: `/test [file]` - Run unit tests on Python files
+- **Code Linting**: `/lint [file]` - Check code style and issues
+- **Security Scanning**: `/security-scan [file]` - Scan for security vulnerabilities
+
+#### 🌐 API Integration Hub
+- **API Testing**: `/api-test [url]` - Test REST API endpoints
+- **Database Connections**: `/db-connect [type] [connection_string]` - Connect to databases
+- **Supported Databases**: PostgreSQL, MySQL, MongoDB, Redis
+
+#### 🔀 Advanced Git Integration
+- **Smart Commits**: `/git smart-commit` - AI generates meaningful commit messages
+- **Branch Visualization**: `/git branches` - Visual branch management
+- **Repository Analysis**: AI-powered repository health analysis
+
+#### 📁 Workspace Management
+- **Project Templates**: `/create-project [type]` - Generate project skeletons
+  - React, Django, FastAPI, Flask projects
+- **Directory Explorer**: `/explore` - Interactive file browsing
+
+#### 📊 System Monitoring
+- **Resource Monitor**: `/monitor` - System resource usage
+- **Log Analysis**: `/analyze-logs` - AI-powered log file analysis
+- **Performance Metrics**: Real-time system performance tracking
+
+#### 🤖 Code Generation & AI Enhancement
+- **Multi-language Code Generation**: `/generate-code [lang] [desc]` - Generate code in any language
+- **Code Completion**: `/complete-code [code]` - Auto-complete code snippets
+- **AI Documentation**: `/gendoc [file]` - Generate documentation
+- **AI Testing**: `/gentest [file]` - Generate unit tests
+- **Code Refactoring**: `/refactor [file] [instruction]` - AI-assisted refactoring
 
 ## 📖 Usage Commands
 

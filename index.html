@@ -36,7 +36,7 @@
                 <a href="#home" class="hover:text-indigo-400 transition">Home</a>
                 <a href="#features" class="hover:text-indigo-400 transition">Features</a>
                 <a href="#download" class="hover:text-indigo-400 transition">Download</a>
-                <a href="#docs" class="hover:text-indigo-400 transition">Docs</a>
+                <a href="docs.html" class="hover:text-indigo-400 transition">Docs</a>
                 <a href="https://github.com/KunjShah95/NEXUS-AI.io" target="_blank" class="hover:text-indigo-400 transition"><i class="fab fa-github"></i></a>
             </div>
             <div class="md:hidden flex flex-col gap-1 cursor-pointer" id="hamburger">
@@ -50,7 +50,7 @@
                 <a href="#home" class="hover:text-indigo-400 transition">Home</a>
                 <a href="#features" class="hover:text-indigo-400 transition">Features</a>
                 <a href="#download" class="hover:text-indigo-400 transition">Download</a>
-                <a href="#docs" class="hover:text-indigo-400 transition">Docs</a>
+                <a href="docs.html" class="hover:text-indigo-400 transition">Docs</a>
                 <a href="https://github.com/KunjShah95/NEXUS-AI.io" target="_blank" class="hover:text-indigo-400 transition"><i class="fab fa-github"></i></a>
             </div>
         </div>
@@ -211,91 +211,17 @@
             </div>
         </div>
     </section>
-    <!-- Docs Section -->
-    <section id="docs" class="py-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#6366f1]/10 border-t border-indigo-400/10">
-        <div class="max-w-4xl mx-auto px-6">
-            <div class="text-center mb-12">
-                <h2 class="text-5xl font-extrabold mb-4 bg-gradient-to-r from-indigo-400 via-fuchsia-500 to-cyan-400 bg-clip-text text-transparent">How to Use NEXUS AI</h2>
-                <p class="text-xl text-slate-300 mb-8">Master your AI terminal experience in minutes.</p>
-            </div>
-            <div class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 text-slate-200 border border-indigo-400/20">
-                <h3 class="text-2xl font-bold mb-6 text-indigo-300">Quick Start</h3>
-                <ol class="list-decimal list-inside space-y-6 text-lg mb-10">
-                    <li><span class="font-bold text-indigo-400">Download & Install:</span> Click <span class="text-fuchsia-400 font-semibold">Download Now</span> and follow the installer for your OS (Windows, Linux, or macOS). Or clone the repo and run <code class="bg-[#0f172a] px-2 py-1 rounded text-fuchsia-400">python main.py</code> in <b>terminal/</b>.</li>
-                    <li><span class="font-bold text-indigo-400">API Keys:</span> Copy <code>.env.example</code> to <code>.env</code> and add your keys for Gemini, Groq, HuggingFace, etc. (see docs below).</li>
-                    <li><span class="font-bold text-indigo-400">Launch NEXUS:</span> Open from your apps or run <code class="bg-[#0f172a] px-2 py-1 rounded text-fuchsia-400">nexus</code> in your terminal.</li>
-                    <li><span class="font-bold text-indigo-400">Start Chatting:</span> Type <code class="bg-[#0f172a] px-2 py-1 rounded text-fuchsia-400">nexus chat "Hello, how are you?"</code> to interact with the AI.</li>
-                    <li><span class="font-bold text-indigo-400">Switch Models:</span> Use <code class="bg-[#0f172a] px-2 py-1 rounded text-fuchsia-400">/switch gemini</code>, <code>/switch groq</code>, <code>/switch ollama</code>, <code>/switch huggingface</code> to change models instantly.</li>
-                    <li><span class="font-bold text-indigo-400">Generate Content:</span> Try <code class="bg-[#0f172a] px-2 py-1 rounded text-fuchsia-400">nexus generate --prompt "Write a Python function"</code> for code or text generation.</li>
-                    <li><span class="font-bold text-indigo-400">Advanced:</span> Use <code>/voice</code> for voice input, <code>/web &lt;query&gt;</code> for web search, <code>/memory save</code> to save, <code>/memory load</code> to load conversations.</li>
-                    <li><span class="font-bold text-indigo-400">Help:</span> Type <code class="bg-[#0f172a] px-2 py-1 rounded text-fuchsia-400">/help</code> for all commands and options.</li>
-                </ol>
-                <h3 class="text-2xl font-bold mb-4 text-indigo-300">Configuration & Security</h3>
-                <ul class="list-disc list-inside space-y-4 text-lg mb-10">
-                    <li><b>API Keys:</b> Store your keys in <code>.env</code> (never share or commit real keys).</li>
-                    <li><b>Security:</b> All input is sanitized, API keys are validated, SSL is enforced, and dangerous commands are blocked.</li>
-                    <li><b>Models:</b> Supports Gemini, Groq, HuggingFace, Ollama (local), DeepSeek (free), and more.</li>
-                    <li><b>Requirements:</b> Python 3.8+, pip, internet for cloud models, local install for Ollama.</li>
-                    <li><b>Project Structure:</b> See <code>README.md</code> and <code>terminal/README.md</code> for full details.</li>
-                </ul>
-                <h3 class="text-2xl font-bold mb-4 text-indigo-300">Common Commands</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                    <div>
-                        <div class="font-semibold text-fuchsia-400 mb-2">Basic</div>
-                        <pre class="bg-[#0f172a] rounded p-4 text-slate-200 text-sm overflow-x-auto">/help              # Show all available commands
-/switch gemini     # Switch to Gemini 2.0 Flash model
-/switch groq       # Switch to Groq Mixtral model
-/switch ollama     # Switch to local Ollama models
-/clear             # Clear conversation history
-/exit              # Exit the application</pre>
-                    </div>
-                    <div>
-                        <div class="font-semibold text-fuchsia-400 mb-2">Advanced</div>
-                        <pre class="bg-[#0f172a] rounded p-4 text-slate-200 text-sm overflow-x-auto">/voice             # Toggle voice input mode
-/web &lt;query&gt;       # Perform web search
-/memory save       # Save conversation to memory
-/memory load       # Load previous conversation
-/status            # Show current model and settings</pre>
-                    </div>
-                </div>
-                <h3 class="text-2xl font-bold mb-4 text-indigo-300">Troubleshooting</h3>
-                <ul class="list-disc list-inside space-y-4 text-lg mb-10">
-                    <li><b>Python not found:</b> Install Python 3.8+ and add to PATH.</li>
-                    <li><b>Dependencies fail:</b> <code>pip install --upgrade pip</code> then <code>pip install -r requirements.txt --no-cache-dir</code></li>
-                    <li><b>API key errors:</b> Check your <code>.env</code> file and key validity.</li>
-                    <li><b>Permission errors:</b> On Windows, run as Administrator.</li>
-                </ul>
-                <h3 class="text-2xl font-bold mb-4 text-indigo-300">Project Structure</h3>
-                <pre class="bg-[#0f172a] rounded p-4 text-slate-200 text-sm overflow-x-auto mb-10">NEXUS-AI.io/
-├── index.html          # Website homepage
-├── app.js              # Website JavaScript
-├── styles.css          # Website styles
-├── CHANGELOG.md        # Version history
-└── terminal/           # Main application
-    ├── main.py         # Core application
-    ├── requirements.txt # Dependencies
-    ├── install.bat     # Windows installer
-    ├── .env.example    # Environment template
-    ├── README.md       # Terminal documentation
-    └── SECURITY.md     # Security guidelines
-</pre>
-                <h3 class="text-2xl font-bold mb-4 text-indigo-300">Security Highlights</h3>
-                <ul class="list-disc list-inside space-y-4 text-lg mb-10">
-                    <li>API key validation (provider-specific, strict format)</li>
-                    <li>SSL/TLS enforced for all requests</li>
-                    <li>Input sanitization and dangerous command blocking</li>
-                    <li>Response size/output limiting</li>
-                    <li>All dependencies pinned and security-audited</li>
-                </ul>
-                <div class="mt-12 text-center">
-                    <a href="https://github.com/KunjShah95/NEXUS-AI.io" target="_blank" class="inline-block bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-105 transition">View Full Documentation on GitHub</a>
-                </div>
-            </div>
-        </div>
-    </section>
     <!-- Footer -->
     <footer class="w-full py-8 bg-[#1e293b] border-t border-indigo-400/10 mt-16">
         <div class="max-w-4xl mx-auto px-6 text-center">
+            <div class="mb-4">
+                <a href="docs.html" class="inline-block bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white px-6 py-3 rounded-xl font-bold shadow-xl hover:scale-105 transition mr-4">
+                    <i class="fas fa-book"></i> Complete Documentation
+                </a>
+                <a href="https://github.com/KunjShah95/NEXUS-AI.io" target="_blank" class="inline-block border-2 border-indigo-400 text-white px-6 py-3 rounded-xl font-bold shadow hover:border-fuchsia-400 transition">
+                    <i class="fab fa-github"></i> View on GitHub
+                </a>
+            </div>
             <div class="footer-social">
                 <span class="text-slate-400 text-lg mr-2">Connect with me / Follow me on:</span>
                 <a href="https://twitter.com/INDIA_KUNJ" target="_blank" title="Follow on Twitter">

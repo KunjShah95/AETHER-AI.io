@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS AI - Complete Documentation</title>
+    <meta name="description" content="Complete documentation for NEXUS AI Terminal - Commands, features, installation, and usage guide">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .command-card { transition: all 0.3s ease; }
+        .command-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .toc { position: sticky; top: 20px; }
+        .code-example { background: #1e293b; border: 1px solid #374151; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .highlight { background: linear-gradient(90deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#6366f1] min-h-screen text-white">
+    <!-- Navigation -->
+    <nav class="w-full bg-[#1e293b]/90 shadow-lg fixed top-0 left-0 z-50 backdrop-blur-md border-b border-indigo-400/20">
+        <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+            <a href="index.html" class="flex items-center gap-2 text-2xl font-bold hover:text-indigo-400 transition">
+                <i class="fas fa-brain text-indigo-400"></i>
+                <span>NEXUS AI</span>
+            </a>
+            <div class="hidden md:flex gap-8 items-center">
+                <a href="index.html" class="hover:text-indigo-400 transition">Home</a>
+                <a href="index.html#features" class="hover:text-indigo-400 transition">Features</a>
+                <a href="index.html#download" class="hover:text-indigo-400 transition">Download</a>
+                <a href="#commands" class="text-indigo-400">Documentation</a>
+                <a href="https://github.com/KunjShah95/NEXUS-AI.io" target="_blank" class="hover:text-indigo-400 transition"><i class="fab fa-github"></i></a>
+            </div>
+            <div class="md:hidden flex flex-col gap-1 cursor-pointer" id="hamburger">
+                <span class="w-7 h-1 bg-white rounded"></span>
+                <span class="w-7 h-1 bg-white rounded"></span>
+                <span class="w-7 h-1 bg-white rounded"></span>
+            </div>
+        </div>
+        <div class="md:hidden" id="nav-menu" style="display:none;">
+            <div class="flex flex-col gap-4 px-6 pb-4">
+                <a href="index.html" class="hover:text-indigo-400 transition">Home</a>
+                <a href="index.html#features" class="hover:text-indigo-400 transition">Features</a>
+                <a href="index.html#download" class="hover:text-indigo-400 transition">Download</a>
+                <a href="#commands" class="text-indigo-400">Documentation</a>
+                <a href="https://github.com/KunjShah95/NEXUS-AI.io" target="_blank" class="hover:text-indigo-400 transition"><i class="fab fa-github"></i></a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-12">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h1 class="text-6xl font-extrabold mb-6 bg-gradient-to-r from-indigo-400 via-fuchsia-500 to-cyan-400 bg-clip-text text-transparent">
+                    NEXUS AI Documentation
+                </h1>
+                <p class="text-xl text-slate-300 max-w-3xl mx-auto mb-8">
+                    Complete guide to mastering NEXUS AI Terminal. Learn all commands, features, and best practices for an enhanced AI experience.
+                </p>
+                <div class="flex justify-center gap-4">
+                    <a href="#quick-start" class="bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white px-8 py-4 rounded-xl font-bold shadow-xl hover:scale-105 transition">
+                        <i class="fas fa-rocket"></i> Get Started
+                    </a>
+                    <a href="#commands" class="border-2 border-indigo-400 text-white px-8 py-4 rounded-xl font-bold shadow hover:border-fuchsia-400 transition">
+                        <i class="fas fa-terminal"></i> View Commands
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Table of Contents -->
+    <section class="py-12 bg-[#1e293b]/50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div class="lg:col-span-1">
+                    <div class="toc bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                        <h3 class="text-lg font-semibold mb-4 text-indigo-300">Table of Contents</h3>
+                        <nav class="space-y-2">
+                            <a href="#voice-input" class="block text-slate-300 hover:text-indigo-400 transition">🎤 Voice Input</a>
+                            <a href="#interactive-dev" class="block text-slate-300 hover:text-indigo-400 transition">� Interactive Development</a>
+                            <a href="#user-management" class="block text-slate-300 hover:text-indigo-400 transition">👥 User Management</a>
+                            <a href="#performance" class="block text-slate-300 hover:text-indigo-400 transition">⚡ Performance & Debugging</a>
+                            <a href="#api-examples" class="block text-slate-300 hover:text-indigo-400 transition">� API Integration Examples</a>
+                            <a href="#contributing" class="block text-slate-300 hover:text-indigo-400 transition">🤝 Contributing</a>
+                            <a href="#faq" class="block text-slate-300 hover:text-indigo-400 transition">❓ FAQ</a>
+                            <a href="#changelog" class="block text-slate-300 hover:text-indigo-400 transition">� Changelog</a>
+                        </nav>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-3 space-y-12">
+                    <!-- Quick Start -->
+                    <section id="quick-start" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">🚀 Quick Start Guide</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">For New Users</h3>
+                                <ol class="list-decimal list-inside space-y-3 text-slate-300">
+                                    <li>Download the installer for your OS</li>
+                                    <li>Run the installation script</li>
+                                    <li>Copy <code>.env.example</code> to <code>.env</code></li>
+                                    <li>Add your API keys to <code>.env</code></li>
+                                    <li>Launch with <code>python main.py</code></li>
+                                    <li>Type <code>/help</code> to see all commands</li>
+                                </ol>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">First Commands</h3>
+                                <div class="space-y-3">
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/help</code>
+                                        <span class="text-slate-400"># Show all available commands</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/switch gemini</code>
+                                        <span class="text-slate-400"># Switch to Gemini AI model</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">Hello, how are you?</code>
+                                        <span class="text-slate-400"># Start chatting with AI</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Installation -->
+                    <section id="installation" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">📦 Installation Guide</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20 text-center">
+                                <div class="w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-gradient-to-br from-indigo-400 to-fuchsia-400 rounded-2xl text-3xl text-white shadow-lg">
+                                    <i class="fab fa-windows"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold mb-2">Windows</h3>
+                                <p class="text-slate-300 mb-4">Download and run install.bat</p>
+                                <code class="bg-[#1e293b] px-3 py-1 rounded text-sm">install.bat</code>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20 text-center">
+                                <div class="w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-gradient-to-br from-indigo-400 to-fuchsia-400 rounded-2xl text-3xl text-white shadow-lg">
+                                    <i class="fab fa-apple"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold mb-2">macOS</h3>
+                                <p class="text-slate-300 mb-4">Download and run install_mac.sh</p>
+                                <code class="bg-[#1e293b] px-3 py-1 rounded text-sm">chmod +x install_mac.sh && ./install_mac.sh</code>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20 text-center">
+                                <div class="w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-gradient-to-br from-indigo-400 to-fuchsia-400 rounded-2xl text-3xl text-white shadow-lg">
+                                    <i class="fab fa-linux"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold mb-2">Linux</h3>
+                                <p class="text-slate-300 mb-4">Download and run install_linux.sh</p>
+                                <code class="bg-[#1e293b] px-3 py-1 rounded text-sm">chmod +x install_linux.sh && ./install_linux.sh</code>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                            <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">System Requirements</h3>
+                            <ul class="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-300">
+                                <li><strong>Python:</strong> 3.8 or higher</li>
+                                <li><strong>RAM:</strong> 4GB minimum, 8GB recommended</li>
+                                <li><strong>Storage:</strong> 500MB free space</li>
+                                <li><strong>OS:</strong> Windows 10+, macOS 10.15+, Linux</li>
+                                <li><strong>Internet:</strong> Required for cloud AI models</li>
+                                <li><strong>Permissions:</strong> Administrator/sudo for installation</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Configuration -->
+                    <section id="configuration" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">⚙️ Configuration</h2>
+
+                        <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20 mb-6">
+                            <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">API Keys Setup</h3>
+                            <p class="text-slate-300 mb-4">Create a <code>.env</code> file in the terminal directory and add your API keys:</p>
+
+                            <div class="code-example">
+                                <pre class="text-slate-200"><code># Gemini API Key (from Google AI Studio)
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Groq API Key (from groq.com)
+GROQ_API_KEY=gsk_your_groq_api_key_here
+
+# HuggingFace API Key (from huggingface.co)
+HUGGINGFACE_API_KEY=hf_your_huggingface_api_key_here
+
+# OpenAI API Key (from platform.openai.com)
+OPENAI_API_KEY=sk-your_openai_api_key_here
+
+# Ollama Configuration (local models)
+OLLAMA_HOST=http://localhost:11434
+
+# Optional Settings
+DEFAULT_MODEL=gemini
+MAX_RETRIES=3
+REQUEST_TIMEOUT=30</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">🔑 Getting API Keys</h3>
+                                <ul class="space-y-2 text-slate-300">
+                                    <li><strong>Gemini:</strong> <a href="https://makersuite.google.com/app/apikey" class="text-indigo-400 hover:underline">Google AI Studio</a></li>
+                                    <li><strong>Groq:</strong> <a href="https://console.groq.com/keys" class="text-indigo-400 hover:underline">Groq Console</a></li>
+                                    <li><strong>HuggingFace:</strong> <a href="https://huggingface.co/settings/tokens" class="text-indigo-400 hover:underline">HuggingFace Settings</a></li>
+                                    <li><strong>OpenAI:</strong> <a href="https://platform.openai.com/api-keys" class="text-indigo-400 hover:underline">OpenAI Platform</a></li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">⚠️ Security Notes</h3>
+                                <ul class="space-y-2 text-slate-300">
+                                    <li>Never commit <code>.env</code> to version control</li>
+                                    <li>Keep API keys secure and private</li>
+                                    <li>Use environment-specific keys</li>
+                                    <li>Rotate keys regularly</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- AI Models -->
+                    <section id="ai-models" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">🤖 AI Models Guide</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                            <div class="command-card bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">Gemini 2.0 Flash</h3>
+                                <p class="text-slate-300 mb-3">Google's fastest and most capable model</p>
+                                <code class="bg-[#1e293b] px-3 py-1 rounded text-sm">/switch gemini</code>
+                                <div class="mt-3 text-xs text-slate-400">
+                                    <strong>Best for:</strong> General tasks, coding, analysis
+                                </div>
+                            </div>
+
+                            <div class="command-card bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">Groq Mixtral</h3>
+                                <p class="text-slate-300 mb-3">Ultra-fast inference with high quality</p>
+                                <code class="bg-[#1e293b] px-3 py-1 rounded text-sm">/switch groq</code>
+                                <div class="mt-3 text-xs text-slate-400">
+                                    <strong>Best for:</strong> Speed-critical tasks
+                                </div>
+                            </div>
+
+                            <div class="command-card bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">Ollama Local</h3>
+                                <p class="text-slate-300 mb-3">Run models locally without API keys</p>
+                                <code class="bg-[#1e293b] px-3 py-1 rounded text-sm">/switch ollama [model]</code>
+                                <div class="mt-3 text-xs text-slate-400">
+                                    <strong>Best for:</strong> Privacy, offline use
+                                </div>
+                            </div>
+
+                            <div class="command-card bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">HuggingFace</h3>
+                                <p class="text-slate-300 mb-3">Access to open-source models</p>
+                                <code class="bg-[#1e293b] px-3 py-1 rounded text-sm">/switch huggingface</code>
+                                <div class="mt-3 text-xs text-slate-400">
+                                    <strong>Best for:</strong> Research, experimentation
+                                </div>
+                            </div>
+
+                            <div class="command-card bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">ChatGPT</h3>
+                                <p class="text-slate-300 mb-3">OpenAI's conversational AI</p>
+                                <code class="bg-[#1e293b] px-3 py-1 rounded text-sm">/switch chatgpt</code>
+                                <div class="mt-3 text-xs text-slate-400">
+                                    <strong>Best for:</strong> Creative writing, analysis
+                                </div>
+                            </div>
+
+                            <div class="command-card bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">MCP Protocol</h3>
+                                <p class="text-slate-300 mb-3">Model Context Protocol integration</p>
+                                <code class="bg-[#1e293b] px-3 py-1 rounded text-sm">/switch mcp</code>
+                                <div class="mt-3 text-xs text-slate-400">
+                                    <strong>Best for:</strong> Advanced integrations
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                            <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Model Switching Examples</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">Basic Switching</h4>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/switch gemini</code><br>
+                                        <code class="text-cyan-400">/switch groq</code><br>
+                                        <code class="text-cyan-400">/switch ollama llama2:13b</code>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">Check Current Model</h4>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/current-model</code><br>
+                                        <code class="text-cyan-400">/models</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Commands Reference -->
+                    <section id="commands" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">💻 Commands Reference</h2>
+
+                        <!-- System Commands -->
+                        <div class="mb-8">
+                            <h3 class="text-2xl font-semibold mb-6 text-fuchsia-400">⚙️ System Commands</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/help</code>
+                                    <p class="text-slate-300 mt-1">Show comprehensive help menu</p>
+                                </div>
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/status</code>
+                                    <p class="text-slate-300 mt-1">Display current model and system status</p>
+                                </div>
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/clear</code>
+                                    <p class="text-slate-300 mt-1">Clear the terminal screen</p>
+                                </div>
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/exit</code>
+                                    <p class="text-slate-300 mt-1">Exit the NEXUS AI terminal</p>
+                                </div>
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/sysinfo</code>
+                                    <p class="text-slate-300 mt-1">Show detailed system information</p>
+                                </div>
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/config</code>
+                                    <p class="text-slate-300 mt-1">Display current configuration</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Utility Commands -->
+                        <div class="mb-8">
+                            <h3 class="text-2xl font-semibold mb-6 text-fuchsia-400">🛠️ Utility Commands</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/run [command]</code>
+                                    <p class="text-slate-300 mt-1">Execute safe system commands</p>
+                                    <div class="text-xs text-slate-400 mt-2">Example: /run ls -la</div>
+                                </div>
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/calc [expression]</code>
+                                    <p class="text-slate-300 mt-1">Calculate mathematical expressions</p>
+                                    <div class="text-xs text-slate-400 mt-2">Example: /calc 2 + 2 * 3</div>
+                                </div>
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/websearch [query]</code>
+                                    <p class="text-slate-300 mt-1">Search the web using DuckDuckGo</p>
+                                    <div class="text-xs text-slate-400 mt-2">Example: /websearch python tutorials</div>
+                                </div>
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/weather [city]</code>
+                                    <p class="text-slate-300 mt-1">Get current weather information</p>
+                                    <div class="text-xs text-slate-400 mt-2">Example: /weather New York</div>
+                                </div>
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/note [text]</code>
+                                    <p class="text-slate-300 mt-1">Save a quick note</p>
+                                    <div class="text-xs text-slate-400 mt-2">Example: /note Remember to buy milk</div>
+                                </div>
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/notes</code>
+                                    <p class="text-slate-300 mt-1">View all saved notes</p>
+                                </div>
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/timer [seconds]</code>
+                                    <p class="text-slate-300 mt-1">Start a countdown timer</p>
+                                    <div class="text-xs text-slate-400 mt-2">Example: /timer 300</div>
+                                </div>
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/convert [val] [from] [to]</code>
+                                    <p class="text-slate-300 mt-1">Unit converter</p>
+                                    <div class="text-xs text-slate-400 mt-2">Example: /convert 100 celsius fahrenheit</div>
+                                </div>
+                                <div class="command-card bg-[#0f172a] rounded-lg p-4 border border-indigo-400/20">
+                                    <code class="text-cyan-400 font-semibold">/password [length]</code>
+                                    <p class="text-slate-300 mt-1">Generate secure password</p>
+                                    <div class="text-xs text-slate-400 mt-2">Example: /password 16</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Developer Commands -->
+                        <div class="mb-8">
+                            <h3 class="text-2xl font-semibold mb-6 text-fuchsia-400">💻 Developer Commands</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="text-lg font-medium mb-3">Code Analysis</h4>
+                                    <div class="space-y-3">
+                                        <div class="command-card bg-[#0f172a] rounded-lg p-3 border border-indigo-400/20">
+                                            <code class="text-cyan-400 font-semibold">/codereview [filename]</code>
+                                            <p class="text-slate-300 mt-1 text-sm">AI code review for bugs and improvements</p>
+                                        </div>
+                                        <div class="command-card bg-[#0f172a] rounded-lg p-3 border border-indigo-400/20">
+                                            <code class="text-cyan-400 font-semibold">/summarizefile [filename]</code>
+                                            <p class="text-slate-300 mt-1 text-sm">AI file summarization</p>
+                                        </div>
+                                        <div class="command-card bg-[#0f172a] rounded-lg p-3 border border-indigo-400/20">
+                                            <code class="text-cyan-400 font-semibold">/findbugs [filename]</code>
+                                            <p class="text-slate-300 mt-1 text-sm">Find bugs in code using AI</p>
+                                        </div>
+                                        <div class="command-card bg-[#0f172a] rounded-lg p-3 border border-indigo-400/20">
+                                            <code class="text-cyan-400 font-semibold">/refactor [filename] [instruction]</code>
+                                            <p class="text-slate-300 mt-1 text-sm">AI code refactoring</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-medium mb-3">Code Generation</h4>
+                                    <div class="space-y-3">
+                                        <div class="command-card bg-[#0f172a] rounded-lg p-3 border border-indigo-400/20">
+                                            <code class="text-cyan-400 font-semibold">/gendoc [filename]</code>
+                                            <p class="text-slate-300 mt-1 text-sm">Generate documentation for code</p>
+                                        </div>
+                                        <div class="command-card bg-[#0f172a] rounded-lg p-3 border border-indigo-400/20">
+                                            <code class="text-cyan-400 font-semibold">/gentest [filename]</code>
+                                            <p class="text-slate-300 mt-1 text-sm">Generate unit tests for code</p>
+                                        </div>
+                                        <div class="command-card bg-[#0f172a] rounded-lg p-3 border border-indigo-400/20">
+                                            <code class="text-cyan-400 font-semibold">/git commitmsg [diff]</code>
+                                            <p class="text-slate-300 mt-1 text-sm">Generate git commit messages</p>
+                                        </div>
+                                        <div class="command-card bg-[#0f172a] rounded-lg p-3 border border-indigo-400/20">
+                                            <code class="text-cyan-400 font-semibold">/todos</code>
+                                            <p class="text-slate-300 mt-1 text-sm">Extract TODOs and FIXMEs from codebase</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Advanced Features -->
+                    <section id="advanced-features" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">🚀 Advanced Features</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">Context-Aware AI</h3>
+                                <div class="space-y-2 text-sm">
+                                    <div><code>/learn [topic]</code> - Teach AI about technologies</div>
+                                    <div><code>/remind [task]</code> - Set task reminders</div>
+                                    <div><code>/reminders</code> - View active reminders</div>
+                                    <div><code>/complete-reminder [n]</code> - Mark reminder as complete</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">Analytics & Monitoring</h3>
+                                <div class="space-y-2 text-sm">
+                                    <div><code>/analytics</code> - View usage statistics</div>
+                                    <div><code>/error-analytics</code> - View error analytics</div>
+                                    <div><code>/start-monitoring</code> - Start system monitoring</div>
+                                    <div><code>/stop-monitoring</code> - Stop system monitoring</div>
+                                    <div><code>/net-diag</code> - Network diagnostics</div>
+                                    <div><code>/analyze-logs</code> - Analyze log files</div>
+                                    <div><code>/health</code> - System health check</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">Games & Learning</h3>
+                                <div class="space-y-2 text-sm">
+                                    <div><code>/challenge [difficulty]</code> - Get coding challenge</div>
+                                    <div><code>/submit-challenge [id] [pid] [code]</code> - Submit solution</div>
+                                    <div><code>/tutorial [topic]</code> - Start interactive tutorial</div>
+                                    <div><code>/tutorial-section [id] [num]</code> - Get tutorial section</div>
+                                    <div><code>/quiz [topic]</code> - Take interactive quiz</div>
+                                    <div><code>/answer-quiz [id] [num]</code> - Answer quiz question</div>
+                                    <div><code>/user-stats</code> - View learning statistics</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">Creative Tools</h3>
+                                <div class="space-y-2 text-sm">
+                                    <div><code>/ascii [text]</code> - Generate ASCII art</div>
+                                    <div><code>/colors [type] [base]</code> - Generate color schemes</div>
+                                    <div><code>/music [mood] [length]</code> - Generate music patterns</div>
+                                    <div><code>/story [genre] [length]</code> - Generate creative stories</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">Advanced Security</h3>
+                                <div class="space-y-2 text-sm">
+                                    <div><code>/encrypt [message]</code> - Encrypt messages</div>
+                                    <div><code>/decrypt [message]</code> - Decrypt messages</div>
+                                    <div><code>/rotate-key [service] [key]</code> - Rotate API keys</div>
+                                    <div><code>/biometric-auth [data]</code> - Biometric authentication</div>
+                                    <div><code>/secure-password [len]</code> - Generate secure passwords</div>
+                                    <div><code>/security-report</code> - View security report</div>
+                                    <div><code>/threat-scan [text]</code> - Scan for security threats</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">User Management</h3>
+                                <div class="space-y-2 text-sm">
+                                    <div><code>/setkey [provider] [key]</code> - Set API keys</div>
+                                    <div><code>/history</code> - View chat history</div>
+                                    <div><code>/clearhistory</code> - Clear chat history</div>
+                                    <div><code>/myactivity</code> - View activity log</div>
+                                    <div><code>/listusers</code> - List all users (admin)</div>
+                                    <div><code>/resetpw [user] [newpass]</code> - Reset password (admin)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                            <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Git Advanced Commands</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">Branch Management</h4>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/git create-branch [name]</code><br>
+                                        <code class="text-cyan-400">/git delete-branch [name]</code>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">File Search</h4>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/aifind [keyword]</code><br>
+                                        <code class="text-cyan-400">/explore</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Security -->
+                    <section id="security" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">🛡️ Security & Privacy</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                            <div>
+                                <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Input Security</h3>
+                                <ul class="list-disc list-inside space-y-3 text-slate-300">
+                                    <li><strong>Input Sanitization:</strong> All user input is cleaned and validated</li>
+                                    <li><strong>Dangerous Command Blocking:</strong> Prevents execution of harmful commands</li>
+                                    <li><strong>Non-printable Character Detection:</strong> Blocks suspicious unicode</li>
+                                    <li><strong>Length Limits:</strong> Prevents buffer overflow attacks</li>
+                                    <li><strong>Pattern Matching:</strong> Blocks SQL injection and XSS attempts</li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">API Security</h3>
+                                <ul class="list-disc list-inside space-y-3 text-slate-300">
+                                    <li><strong>Key Validation:</strong> Provider-specific API key format validation</li>
+                                    <li><strong>SSL/TLS Enforcement:</strong> All API calls use secure connections</li>
+                                    <li><strong>Response Limiting:</strong> Prevents excessive data exposure</li>
+                                    <li><strong>Rate Limiting:</strong> Prevents API abuse</li>
+                                    <li><strong>Secure Storage:</strong> Keys stored locally, never transmitted</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                            <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Security Best Practices</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2 text-cyan-400">🔐 API Keys</h4>
+                                    <ul class="space-y-1 text-sm text-slate-300">
+                                        <li>• Never share API keys</li>
+                                        <li>• Use environment variables</li>
+                                        <li>• Rotate keys regularly</li>
+                                        <li>• Monitor key usage</li>
+                                        <li>• Use read-only keys when possible</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2 text-cyan-400">🛡️ System Security</h4>
+                                    <ul class="space-y-1 text-sm text-slate-300">
+                                        <li>• Keep system updated</li>
+                                        <li>• Use strong passwords</li>
+                                        <li>• Enable firewall</li>
+                                        <li>• Monitor system logs</li>
+                                        <li>• Regular security scans</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Voice Input -->
+                    <section id="voice-input" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">🎤 Voice Input & Hands-Free Operation</h2>
+
+                        <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20 mb-6">
+                            <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Voice Command Setup</h3>
+                            <p class="text-slate-300 mb-4">Enable hands-free operation with voice input capabilities:</p>
+
+                            <div class="code-example">
+                                <code class="text-cyan-400">/voice</code>
+                                <span class="text-slate-400"># Activate voice input mode</span>
+                            </div>
+
+                            <div class="bg-yellow-900/20 border border-yellow-400/30 rounded-lg p-4 mt-4">
+                                <h4 class="text-yellow-400 font-semibold mb-2">📦 Requirements</h4>
+                                <p class="text-slate-300 text-sm">Install SpeechRecognition for voice input:</p>
+                                <code class="bg-[#1e293b] px-3 py-1 rounded text-sm mt-2 block">pip install SpeechRecognition</code>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">🎯 Voice Commands</h3>
+                                <ul class="space-y-2 text-slate-300">
+                                    <li><strong>Basic Commands:</strong> "help", "status", "clear"</li>
+                                    <li><strong>AI Queries:</strong> "What is Python?"</li>
+                                    <li><strong>Model Switching:</strong> "switch to gemini"</li>
+                                    <li><strong>System Commands:</strong> "run ls", "calculate 2+2"</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-3 text-cyan-400">⚙️ Voice Settings</h3>
+                                <ul class="space-y-2 text-slate-300">
+                                    <li><strong>Timeout:</strong> 5 seconds listening</li>
+                                    <li><strong>Language:</strong> English (default)</li>
+                                    <li><strong>Accuracy:</strong> Google Speech Recognition</li>
+                                    <li><strong>Privacy:</strong> Local processing only</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Interactive Development -->
+                    <section id="interactive-dev" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">💻 Interactive Development Environment</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-4 text-cyan-400">Python Code Execution</h3>
+                                <div class="space-y-3">
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/run-python print('Hello, NEXUS!')</code>
+                                        <span class="text-slate-400"># Execute Python code</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/run-python</code>
+                                        <span class="text-slate-400"># Enter multi-line mode</span>
+                                    </div>
+                                </div>
+                                <p class="text-slate-300 text-sm mt-3">Safe execution with timeout protection</p>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-4 text-cyan-400">Debug & Profile</h3>
+                                <div class="space-y-3">
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/debug my_script.py</code>
+                                        <span class="text-slate-400"># Setup debug session</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/profile my_script.py</code>
+                                        <span class="text-slate-400"># Performance profiling</span>
+                                    </div>
+                                </div>
+                                <p class="text-slate-300 text-sm mt-3">Automatic breakpoint insertion and profiling</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                            <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Testing & Quality Assurance</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="code-example">
+                                    <code class="text-cyan-400">/test test_my_code.py</code>
+                                    <span class="text-slate-400"># Run unit tests</span>
+                                </div>
+                                <div class="code-example">
+                                    <code class="text-cyan-400">/lint my_code.py</code>
+                                    <span class="text-slate-400"># Code linting</span>
+                                </div>
+                                <div class="code-example">
+                                    <code class="text-cyan-400">/security-scan my_code.py</code>
+                                    <span class="text-slate-400"># Security analysis</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- User Management -->
+                    <section id="user-management" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">👥 User Management & Activity Tracking</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-4 text-cyan-400">API Key Management</h3>
+                                <div class="space-y-3">
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/setkey gemini YOUR_API_KEY</code>
+                                        <span class="text-slate-400"># Set Gemini API key</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/setkey groq YOUR_API_KEY</code>
+                                        <span class="text-slate-400"># Set Groq API key</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/setkey openai YOUR_API_KEY</code>
+                                        <span class="text-slate-400"># Set OpenAI API key</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-4 text-cyan-400">Activity & History</h3>
+                                <div class="space-y-3">
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/myactivity</code>
+                                        <span class="text-slate-400"># View your activity log</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/history</code>
+                                        <span class="text-slate-400"># View chat history</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/clearhistory</code>
+                                        <span class="text-slate-400"># Clear chat history</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                            <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Admin Commands (Admin Only)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">User Management</h4>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/listusers</code>
+                                        <span class="text-slate-400"># List all users</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/resetpw username newpass</code>
+                                        <span class="text-slate-400"># Reset user password</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">Audit & Security</h4>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/auditlog</code>
+                                        <span class="text-slate-400"># View audit log</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/security-report</code>
+                                        <span class="text-slate-400"># Security report</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Performance & Debugging -->
+                    <section id="performance" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">⚡ Performance & Debugging Tools</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-4 text-cyan-400">Performance Monitoring</h3>
+                                <div class="space-y-3">
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/start-monitoring</code>
+                                        <span class="text-slate-400"># Start system monitoring</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/stop-monitoring</code>
+                                        <span class="text-slate-400"># Stop system monitoring</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/health</code>
+                                        <span class="text-slate-400"># System health check</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-4 text-cyan-400">Network Diagnostics</h3>
+                                <div class="space-y-3">
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/net-diag</code>
+                                        <span class="text-slate-400"># Network connectivity test</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/analyze-logs</code>
+                                        <span class="text-slate-400"># Analyze system logs</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                            <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">File Explorer & Search</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">Interactive Explorer</h4>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/explore</code>
+                                        <span class="text-slate-400"># Interactive file browser</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/aifind keyword</code>
+                                        <span class="text-slate-400"># AI-powered file search</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">Git Integration</h4>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/git create-branch name</code>
+                                        <span class="text-slate-400"># Create new branch</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/git delete-branch name</code>
+                                        <span class="text-slate-400"># Delete branch</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- API Integration Examples -->
+                    <section id="api-examples" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">🔗 API Integration Examples</h2>
+
+                        <div class="space-y-8">
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Python Code Examples</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <h4 class="text-lg font-medium mb-2">Basic AI Query</h4>
+                                        <div class="code-example">
+                                            <pre class="text-slate-200"><code># Switch to Gemini and ask a question
+/switch gemini
+What is the capital of France?
+
+# Switch to Groq for faster response
+/switch groq
+Explain quantum computing in simple terms</code></pre>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="text-lg font-medium mb-2">Code Generation</h4>
+                                        <div class="code-example">
+                                            <pre class="text-slate-200"><code># Generate a Python function
+Write a Python function to calculate fibonacci numbers
+
+# Generate with specific requirements
+Create a REST API endpoint in Flask that handles user authentication</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Advanced Workflows</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <h4 class="text-lg font-medium mb-2">Development Workflow</h4>
+                                        <div class="code-example">
+                                            <pre class="text-slate-200"><code># Code review process
+/codereview my_script.py
+/findbugs my_script.py
+/gentest my_script.py
+
+# Git workflow
+/git commitmsg diff.txt
+/git create-branch feature-x</code></pre>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="text-lg font-medium mb-2">Security & Testing</h4>
+                                        <div class="code-example">
+                                            <pre class="text-slate-200"><code># Security analysis
+/threat-scan suspicious_text
+/security-report
+/encrypt sensitive_data
+
+# Performance monitoring
+/start-monitoring
+/health
+/net-diag</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Contributing -->
+                    <section id="contributing" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">🤝 Contributing to NEXUS AI</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-4 text-cyan-400">Development Setup</h3>
+                                <ol class="list-decimal list-inside space-y-2 text-slate-300">
+                                    <li>Fork the repository on GitHub</li>
+                                    <li>Clone your fork locally</li>
+                                    <li>Create a feature branch</li>
+                                    <li>Install development dependencies</li>
+                                    <li>Run tests and linting</li>
+                                    <li>Submit a pull request</li>
+                                </ol>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-lg font-semibold mb-4 text-cyan-400">Code Standards</h3>
+                                <ul class="list-disc list-inside space-y-2 text-slate-300">
+                                    <li>Follow PEP 8 style guidelines</li>
+                                    <li>Add docstrings to all functions</li>
+                                    <li>Write comprehensive unit tests</li>
+                                    <li>Use type hints for better code clarity</li>
+                                    <li>Keep functions focused and modular</li>
+                                    <li>Add logging for debugging</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                            <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Contribution Guidelines</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">🐛 Bug Reports</h4>
+                                    <ul class="space-y-1 text-sm text-slate-300">
+                                        <li>• Use bug report template</li>
+                                        <li>• Include error messages</li>
+                                        <li>• Describe reproduction steps</li>
+                                        <li>• Add system information</li>
+                                        <li>• Suggest fix if possible</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">✨ Feature Requests</h4>
+                                    <ul class="space-y-1 text-sm text-slate-300">
+                                        <li>• Check existing issues first</li>
+                                        <li>• Describe use case clearly</li>
+                                        <li>• Explain benefit to users</li>
+                                        <li>• Consider implementation complexity</li>
+                                        <li>• Provide mockups if UI-related</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">🔧 Pull Requests</h4>
+                                    <ul class="space-y-1 text-sm text-slate-300">
+                                        <li>• Reference related issues</li>
+                                        <li>• Keep changes focused</li>
+                                        <li>• Add tests for new features</li>
+                                        <li>• Update documentation</li>
+                                        <li>• Follow commit message conventions</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- FAQ -->
+                    <section id="faq" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">❓ Frequently Asked Questions</h2>
+
+                        <div class="space-y-6">
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Getting Started</h3>
+
+                                <div class="space-y-4">
+                                    <div>
+                                        <h4 class="text-lg font-medium text-cyan-400">Q: How do I get API keys?</h4>
+                                        <p class="text-slate-300 mt-2"><strong>A:</strong> Visit the respective provider websites:
+                                        <br>• <strong>Gemini:</strong> <a href="https://makersuite.google.com/app/apikey" class="text-indigo-400 hover:underline">Google AI Studio</a>
+                                        <br>• <strong>Groq:</strong> <a href="https://console.groq.com/keys" class="text-indigo-400 hover:underline">Groq Console</a>
+                                        <br>• <strong>HuggingFace:</strong> <a href="https://huggingface.co/settings/tokens" class="text-indigo-400 hover:underline">HuggingFace Settings</a>
+                                        <br>• <strong>OpenAI:</strong> <a href="https://platform.openai.com/api-keys" class="text-indigo-400 hover:underline">OpenAI Platform</a></p>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="text-lg font-medium text-cyan-400">Q: Can I use NEXUS without API keys?</h4>
+                                        <p class="text-slate-300 mt-2"><strong>A:</strong> Yes! Install <a href="https://ollama.ai" class="text-indigo-400 hover:underline">Ollama</a> locally and use <code>/switch ollama</code> to run models without any API keys.</p>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="text-lg font-medium text-cyan-400">Q: Which AI model should I use?</h4>
+                                        <p class="text-slate-300 mt-2"><strong>A:</strong>
+                                        <br>• <strong>Gemini:</strong> Best for general tasks, coding, and analysis
+                                        <br>• <strong>Groq:</strong> Fastest for quick responses
+                                        <br>• <strong>Ollama:</strong> Privacy-focused, works offline
+                                        <br>• <strong>ChatGPT:</strong> Creative writing and complex reasoning</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Troubleshooting</h3>
+
+                                <div class="space-y-4">
+                                    <div>
+                                        <h4 class="text-lg font-medium text-cyan-400">Q: Getting "API key invalid" error?</h4>
+                                        <p class="text-slate-300 mt-2"><strong>A:</strong> Check your <code>.env</code> file format and ensure API keys are correct. Use <code>/setkey</code> command to update keys.</p>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="text-lg font-medium text-cyan-400">Q: Voice input not working?</h4>
+                                        <p class="text-slate-300 mt-2"><strong>A:</strong> Install SpeechRecognition: <code>pip install SpeechRecognition</code>. Ensure microphone permissions are granted.</p>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="text-lg font-medium text-cyan-400">Q: Commands not responding?</h4>
+                                        <p class="text-slate-300 mt-2"><strong>A:</strong> Check internet connection for cloud models. For Ollama, ensure the service is running with <code>ollama serve</code>.</p>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="text-lg font-medium text-cyan-400">Q: How to clear chat history?</h4>
+                                        <p class="text-slate-300 mt-2"><strong>A:</strong> Use <code>/clearhistory</code> to clear your chat history, or <code>/clear</code> to clear the terminal screen.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Advanced Usage</h3>
+
+                                <div class="space-y-4">
+                                    <div>
+                                        <h4 class="text-lg font-medium text-cyan-400">Q: How to use multiple models?</h4>
+                                        <p class="text-slate-300 mt-2"><strong>A:</strong> Switch between models anytime with <code>/switch [model]</code>. Each model has different strengths for different tasks.</p>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="text-lg font-medium text-cyan-400">Q: Can I run custom code?</h4>
+                                        <p class="text-slate-300 mt-2"><strong>A:</strong> Yes! Use <code>/run-python [code]</code> for safe Python execution, or <code>/run [command]</code> for system commands.</p>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="text-lg font-medium text-cyan-400">Q: How to backup my data?</h4>
+                                        <p class="text-slate-300 mt-2"><strong>A:</strong> Chat history and settings are stored locally. Copy the <code>~/.nexus/</code> directory to backup your data.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Changelog -->
+                    <section id="changelog" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">📋 Changelog & Release Notes</h2>
+
+                        <div class="space-y-8">
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-2xl font-semibold mb-4 text-fuchsia-400">Version 3.0 - Latest Release</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
+                                        <div>
+                                            <strong class="text-cyan-400">✅ Fixed Gemini 2.0 Flash API</strong>
+                                            <p class="text-slate-300 text-sm mt-1">Resolved 400 errors with proper model configuration and API handling</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
+                                        <div>
+                                            <strong class="text-cyan-400">🔧 Enhanced Windows Installer</strong>
+                                            <p class="text-slate-300 text-sm mt-1">Automated setup with better error handling and dependency management</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-2 h-2 bg-purple-400 rounded-full mt-2"></div>
+                                        <div>
+                                            <strong class="text-cyan-400">🎤 Voice Input Support</strong>
+                                            <p class="text-slate-300 text-sm mt-1">Hands-free operation with speech recognition capabilities</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-2 h-2 bg-yellow-400 rounded-full mt-2"></div>
+                                        <div>
+                                            <strong class="text-cyan-400">🌐 Web Search Integration</strong>
+                                            <p class="text-slate-300 text-sm mt-1">Real-time web search using DuckDuckGo with formatted results</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-2 h-2 bg-red-400 rounded-full mt-2"></div>
+                                        <div>
+                                            <strong class="text-cyan-400">🚀 Advanced Features Module</strong>
+                                            <p class="text-slate-300 text-sm mt-1">Interactive development, testing, security scanning, and creative tools</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-2xl font-semibold mb-4 text-fuchsia-400">Version 2.5 - Previous Release</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
+                                        <div>
+                                            <strong class="text-cyan-400">🔒 Enhanced Security</strong>
+                                            <p class="text-slate-300 text-sm mt-1">Improved input sanitization and API key validation</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
+                                        <div>
+                                            <strong class="text-cyan-400">🎨 Rich Terminal UI</strong>
+                                            <p class="text-slate-300 text-sm mt-1">Beautiful interface with syntax highlighting and progress indicators</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-2 h-2 bg-purple-400 rounded-full mt-2"></div>
+                                        <div>
+                                            <strong class="text-cyan-400">💾 Context Memory</strong>
+                                            <p class="text-slate-300 text-sm mt-1">Conversation persistence with ChromaDB integration</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-2xl font-semibold mb-4 text-fuchsia-400">Upcoming Features (v3.1)</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-2 h-2 bg-orange-400 rounded-full mt-2"></div>
+                                        <div>
+                                            <strong class="text-cyan-400">🌍 Multi-language Support</strong>
+                                            <p class="text-slate-300 text-sm mt-1">Support for multiple programming languages in code analysis</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-2 h-2 bg-pink-400 rounded-full mt-2"></div>
+                                        <div>
+                                            <strong class="text-cyan-400">🤖 Custom AI Models</strong>
+                                            <p class="text-slate-300 text-sm mt-1">Support for custom-trained models and fine-tuning</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-2 h-2 bg-teal-400 rounded-full mt-2"></div>
+                                        <div>
+                                            <strong class="text-cyan-400">📊 Advanced Analytics</strong>
+                                            <p class="text-slate-300 text-sm mt-1">Detailed usage analytics and performance metrics</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-2 h-2 bg-indigo-400 rounded-full mt-2"></div>
+                                        <div>
+                                            <strong class="text-cyan-400">🔌 Plugin System</strong>
+                                            <p class="text-slate-300 text-sm mt-1">Extensible plugin architecture for custom features</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Troubleshooting -->
+                    <section id="troubleshooting" class="bg-[#1e293b] rounded-3xl shadow-2xl p-10 border border-indigo-400/20">
+                        <h2 class="text-4xl font-bold mb-8 text-indigo-300">🔧 Troubleshooting</h2>
+
+                        <div class="space-y-6">
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Common Issues & Solutions</h3>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <h4 class="text-lg font-medium mb-3 text-cyan-400">Python Issues</h4>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <strong class="text-red-400">Python not found:</strong>
+                                                <p class="text-slate-300 text-sm mt-1">Install Python 3.8+ from python.org and add to PATH</p>
+                                            </div>
+                                            <div>
+                                                <strong class="text-red-400">Import errors:</strong>
+                                                <p class="text-slate-300 text-sm mt-1">Run <code>pip install -r requirements.txt</code></p>
+                                            </div>
+                                            <div>
+                                                <strong class="text-red-400">Permission denied:</strong>
+                                                <p class="text-slate-300 text-sm mt-1">Run as administrator/sudo</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="text-lg font-medium mb-3 text-cyan-400">API Issues</h4>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <strong class="text-red-400">Invalid API key:</strong>
+                                                <p class="text-slate-300 text-sm mt-1">Check .env file and key validity</p>
+                                            </div>
+                                            <div>
+                                                <strong class="text-red-400">Rate limit exceeded:</strong>
+                                                <p class="text-slate-300 text-sm mt-1">Wait and retry, or upgrade API plan</p>
+                                            </div>
+                                            <div>
+                                                <strong class="text-red-400">Network timeout:</strong>
+                                                <p class="text-slate-300 text-sm mt-1">Check internet connection</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Debug Commands</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/status</code>
+                                        <span class="text-slate-400"># Check system status</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/sysinfo</code>
+                                        <span class="text-slate-400"># System information</span>
+                                    </div>
+                                    <div class="code-example">
+                                        <code class="text-cyan-400">/config</code>
+                                        <span class="text-slate-400"># Current configuration</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0f172a] rounded-xl p-6 border border-indigo-400/20">
+                                <h3 class="text-xl font-semibold mb-4 text-fuchsia-400">Getting Help</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <h4 class="text-lg font-medium mb-2 text-cyan-400">📖 Documentation</h4>
+                                        <ul class="space-y-1 text-slate-300">
+                                            <li>• <code>/help</code> - In-terminal help</li>
+                                            <li>• README.md - Project documentation</li>
+                                            <li>• GitHub Issues - Community support</li>
+                                            <li>• SECURITY.md - Security guidelines</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-medium mb-2 text-cyan-400">🐛 Reporting Issues</h4>
+                                        <ul class="space-y-1 text-slate-300">
+                                            <li>• Include error messages</li>
+                                            <li>• Describe steps to reproduce</li>
+                                            <li>• System information</li>
+                                            <li>• API provider used</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="w-full py-8 bg-[#1e293b] border-t border-indigo-400/10 mt-16">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <div class="mb-4">
+                <a href="index.html" class="inline-block bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white px-6 py-3 rounded-xl font-bold shadow-xl hover:scale-105 transition mr-4">
+                    <i class="fas fa-home"></i> Back to Home
+                </a>
+                <a href="https://github.com/KunjShah95/NEXUS-AI.io" target="_blank" class="inline-block border-2 border-indigo-400 text-white px-6 py-3 rounded-xl font-bold shadow hover:border-fuchsia-400 transition">
+                    <i class="fab fa-github"></i> View on GitHub
+                </a>
+            </div>
+            <div class="text-slate-400 text-sm">
+                &copy; 2025 NEXUS AI. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile Navigation
+        const hamburger = document.getElementById('hamburger');
+        const navMenu = document.getElementById('nav-menu');
+
+        if (hamburger && navMenu) {
+            hamburger.addEventListener('click', () => {
+                navMenu.classList.toggle('active');
+                hamburger.classList.toggle('active');
+            });
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Highlight current section in TOC
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.toc a');
+
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 60) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('text-indigo-400');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('text-indigo-400');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

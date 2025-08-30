@@ -7,7 +7,7 @@ groq==0.9.0
 
 # Hugging Face Transformers (from v3)
 transformers==4.41.2
-torch==2.3.0
+torch==2.6.0
 accelerate==0.30.1
 tokenizers==0.19.1
 
@@ -48,6 +48,68 @@ typing-extensions==4.12.2
 
 # Additional utilities
 pydantic==2.7.4              # Data validation with security features
+
+# --- New Advanced Features Dependencies ---
+
+# Interactive Development Environment
+jupyter==1.0.0               # Jupyter notebook support
+ipykernel==6.29.4            # IPython kernel for code execution
+jedi==0.19.1                 # Code completion and analysis
+black==24.4.2                # Code formatting
+flake8==7.0.0                # Code linting
+mypy==1.10.0                 # Type checking
+autopep8==2.3.1              # Code auto-formatting
+
+# Testing & Quality Assurance
+pytest==8.2.2                # Testing framework
+pytest-cov==5.0.0            # Coverage reporting
+bandit==1.7.9                # Security linting
+safety==3.2.3                # Dependency vulnerability scanning
+radon==6.0.1                 # Code complexity analysis
+
+# Database Integration
+psycopg2-binary==2.9.9        # PostgreSQL connector
+pymongo==4.7.3               # MongoDB connector
+sqlalchemy==2.0.31           # SQL toolkit and ORM
+redis==5.0.7                 # Redis client
+
+# API Integration & Testing
+httpx==0.27.0                # Modern HTTP client
+fastapi==0.115.9             # API framework (already included)
+uvicorn==0.30.1              # ASGI server
+requests-toolbelt==1.0.0     # HTTP utilities
+aiohttp==3.9.5               # Async HTTP client
+
+# Git Integration Enhancements
+gitpython==3.1.43            # Git operations
+gitdb==4.0.11                # Git database
+
+# Performance Profiling
+memory-profiler==0.61.0      # Memory profiling
+line-profiler==4.1.2         # Line-by-line profiling
+psutil==6.0.0                # System and process utilities
+
+# Code Analysis & AI Enhancement
+astroid==3.2.2               # AST analysis
+pylint==3.2.3                # Advanced linting
+rope==1.13.0                 # Refactoring library
+parso==0.8.4                 # Python parser
+
+# File System & Project Management
+pathlib2==2.3.7.post1         # Object-oriented filesystem paths
+watchdog==4.0.1              # File system monitoring
+pyyaml==6.0.1                # YAML processing (already included)
+
+# Data Visualization & Charts
+matplotlib==3.9.1            # Plotting library
+plotly==5.22.0               # Interactive charts
+seaborn==0.13.2              # Statistical visualization
+
+# Additional AI/ML Capabilities
+scikit-learn==1.5.1          # Machine learning
+pandas==2.2.2                # Data analysis
+numpy==1.26.4                # Numerical computing
+nltk==3.8.1                  # Natural language processing
 
 # Security-focused dependencies
 cryptography==42.0.8         # For secure operations
