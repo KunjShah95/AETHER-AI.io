@@ -23,8 +23,13 @@ function incrementDownloadCount() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    // Remove the duplicate download counter increment
-    // The incrementDownloadCount() is already called in the downloadFile function
+    // Handle download counter for direct download links
+    document.querySelectorAll('a[href*=".zip"][download]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            incrementDownloadCount();
+            showNotification('✅ Download started!');
+        });
+    });
 });
 
 // Mobile Navigation
@@ -196,15 +201,15 @@ function downloadFile(os) {
 
     if (os === 'Windows') {
         filename = 'install_windows.zip';
-        localUrl = '/install_windows.zip';  // Use absolute path from root
+        localUrl = '/install_windows.zip';
         githubUrl = 'https://github.com/KunjShah95/NEXUS-AI.io/raw/main/install_windows.zip';
     } else if (os === 'Linux') {
         filename = 'install_linux.zip';
-        localUrl = '/install_linux.zip';  // Use absolute path from root
+        localUrl = '/install_linux.zip';
         githubUrl = 'https://github.com/KunjShah95/NEXUS-AI.io/raw/main/install_linux.zip';
     } else if (os === 'macOS') {
         filename = 'install_mac.zip';
-        localUrl = '/install_mac.zip';  // Use absolute path from root
+        localUrl = '/install_mac.zip';
         githubUrl = 'https://github.com/KunjShah95/NEXUS-AI.io/raw/main/install_mac.zip';
     }
 
