@@ -23,9 +23,8 @@ function incrementDownloadCount() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.btn-download').forEach(btn => {
-        btn.addEventListener('click', incrementDownloadCount);
-    });
+    // Remove the duplicate download counter increment
+    // The incrementDownloadCount() is already called in the downloadFile function
 });
 
 // Mobile Navigation
@@ -189,46 +188,52 @@ function scrollToSection(sectionId) {
     }
 }
 
-// Download functionality with real-time counter update
+// Download functionality with improved reliability
 function downloadFile(os) {
-    let url = '';
     let filename = '';
+    let localUrl = '';
+    let githubUrl = '';
+
     if (os === 'Windows') {
-        url = 'https://kunjshah95.github.io/NEXUS-AI.io/terminal/install_windows.zip';
-        filename = 'nexus-ai-installer-windows.zip';
+        filename = 'install_windows.zip';
+        localUrl = '/install_windows.zip';  // Use absolute path from root
+        githubUrl = 'https://github.com/KunjShah95/NEXUS-AI.io/raw/main/install_windows.zip';
     } else if (os === 'Linux') {
-        url = 'https://kunjshah95.github.io/NEXUS-AI.io/terminal/install_linux.zip';
-        filename = 'nexus-ai-installer-linux.zip';
+        filename = 'install_linux.zip';
+        localUrl = '/install_linux.zip';  // Use absolute path from root
+        githubUrl = 'https://github.com/KunjShah95/NEXUS-AI.io/raw/main/install_linux.zip';
     } else if (os === 'macOS') {
-        url = 'https://kunjshah95.github.io/NEXUS-AI.io/terminal/install_mac.zip';
-        filename = 'nexus-ai-installer-mac.zip';
+        filename = 'install_mac.zip';
+        localUrl = '/install_mac.zip';  // Use absolute path from root
+        githubUrl = 'https://github.com/KunjShah95/NEXUS-AI.io/raw/main/install_mac.zip';
     }
-    if (url) {
-        // Use fetch to handle download properly
-        fetch(url)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.blob();
-            })
-            .then(blob => {
-                const a = document.createElement('a');
-                const downloadUrl = window.URL.createObjectURL(blob);
-                a.href = downloadUrl;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(downloadUrl);
-                // Only increment after successful download
-                incrementDownloadCount();
-                showNotification(`✅ ${filename} downloaded successfully!`);
-            })
-            .catch(error => {
-                console.error('Download failed:', error);
-                showNotification(`❌ Download failed. Please try again or visit our GitHub repository.`);
-            });
+
+    showNotification(`⏳ Preparing download for ${os}...`);
+
+    // Check if we're running locally or on GitHub Pages
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port === '8000';
+
+    const a = document.createElement('a');
+
+    if (isLocal) {
+        // Running locally - use direct file path
+        a.href = localUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        incrementDownloadCount();
+        showNotification(`✅ ${filename} downloaded successfully!`);
+    } else {
+        // Running on GitHub Pages - use GitHub raw URL
+        a.href = githubUrl;
+        a.download = filename;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        incrementDownloadCount();
+        showNotification(`✅ Download started! If it doesn't work, visit our GitHub repository.`);
     }
 }
 
@@ -250,10 +255,12 @@ function openGitHub() {
 function showNotification(message) {
     if (notificationText && notification) {
         notificationText.textContent = message;
-        notification.classList.add('show');
-        
+        notification.style.opacity = '1';
+        notification.style.pointerEvents = 'auto';
+
         setTimeout(() => {
-            notification.classList.remove('show');
+            notification.style.opacity = '0';
+            notification.style.pointerEvents = 'none';
         }, 3000);
     }
 }
@@ -509,5 +516,12 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
+
+    // Expose functions to global scope for HTML onclick handlers
+    window.downloadFile = downloadFile;
+    window.scrollToSection = scrollToSection;
+    window.startDemo = startDemo;
+    window.openGuide = openGuide;
+    window.openGitHub = openGitHub;
 
 })();

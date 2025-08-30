@@ -384,5 +384,4 @@ Their story became the stuff of legends, inspiring generations to come."""
             return schemes
 
         except Exception as e:
-            return [{"error": f"Failed to list color schemes: {str(e)}"}]</content>
-<parameter name="filePath">c:\NEXUS-AI.io\terminal\creative_tools.py
+            return [{"error": f"Failed to list color schemes: {str(e)}"}]

@@ -292,5 +292,4 @@ class ContextAwareAI:
                 return "❌ Invalid task index"
 
         except Exception as e:
-            return f"❌ Failed to complete task: {str(e)}"</content>
-<parameter name="filePath">c:\NEXUS-AI.io\terminal\context_aware_ai.py
+            return f"❌ Failed to complete task: {str(e)}"

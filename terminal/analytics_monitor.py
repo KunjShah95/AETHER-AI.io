@@ -448,5 +448,4 @@ class AnalyticsMonitor:
             return health
 
         except Exception as e:
-            return {"error": f"Health check failed: {str(e)}"}</content>
-<parameter name="filePath">c:\NEXUS-AI.io\terminal\analytics_monitor.py
+            return {"error": f"Health check failed: {str(e)}"}

@@ -434,5 +434,4 @@ class AdvancedSecurity:
             return active_sessions
 
         except Exception as e:
-            return [{"error": f"Failed to get sessions: {str(e)}"}]</content>
-<parameter name="filePath">c:\NEXUS-AI.io\terminal\advanced_security.py
+            return [{"error": f"Failed to get sessions: {str(e)}"}]
