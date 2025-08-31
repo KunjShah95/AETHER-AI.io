@@ -50,16 +50,40 @@ try:
     from games_learning import GamesLearning
     from creative_tools import CreativeTools
     from advanced_security import AdvancedSecurity
+    from task_manager import TaskManager
+    from theme_manager import ThemeManager
+    from code_review_assistant import CodeReviewAssistant
+    from integration_hub import IntegrationHub
 except ImportError:
     ContextAwareAI = None
     AnalyticsMonitor = None
     GamesLearning = None
     CreativeTools = None
     AdvancedSecurity = None
+    TaskManager = None
+    ThemeManager = None
+    CodeReviewAssistant = None
+    IntegrationHub = None
 
 # --- Configuration ---
 load_dotenv()
+
+# Initialize console with default theme
 console = Console()
+
+# Global theme manager reference (will be set when NexusAI initializes)
+global_theme_manager = None
+
+def update_console_theme(theme_manager=None):
+    """Update the global console theme"""
+    global console, global_theme_manager
+    if theme_manager:
+        global_theme_manager = theme_manager
+        rich_theme = theme_manager.get_rich_theme()
+        console = Console(theme=rich_theme)
+    else:
+        console = Console()
+
 logging.basicConfig(
     filename='ai_assistant.log',
     level=logging.INFO,
@@ -532,7 +556,7 @@ class NexusAI:
         self.security = SecurityManager()
         self.current_model = self._load_config()
         self.allowed_commands = [
-            'ls', 'pwd', 'whoami', 'date', 'uptime', 'echo', 'cat', 'head', 'tail', 'df', 'du', 'free', 'uname', 'id'
+            'ls', 'pwd', 'whoami', 'date', 'uptime', 'echo', 'cat', 'head', 'tail', 'df', 'du', 'free', 'uname', 'id', 'git'
         ]
         
         # Initialize advanced modules
@@ -541,6 +565,14 @@ class NexusAI:
         self.games = GamesLearning() if GamesLearning else None
         self.creative = CreativeTools() if CreativeTools else None
         self.adv_security = AdvancedSecurity() if AdvancedSecurity else None
+        self.task_manager = TaskManager() if TaskManager else None
+        self.theme_manager = ThemeManager() if ThemeManager else None
+        self.code_reviewer = CodeReviewAssistant() if CodeReviewAssistant else None
+        self.integration_hub = IntegrationHub() if IntegrationHub else None
+        
+        # Update console theme if theme manager is available
+        if self.theme_manager:
+            update_console_theme(self.theme_manager)
         
         self.show_banner()
     
@@ -639,6 +671,141 @@ class NexusAI:
         except Exception as e:
             return f"❌ Error: {str(e)[:100]}..."
     
+    def execute_git_command(self, git_cmd: str) -> str:
+        """Execute Git commands with enhanced formatting and error handling"""
+        try:
+            # Check if we're in a Git repository
+            if not os.path.exists('.git') and not os.path.exists('../.git'):
+                return "❌ Not a Git repository. Initialize with 'git init' or navigate to a Git repository."
+            
+            clean_cmd = self.security.sanitize(git_cmd)
+            if len(clean_cmd) > 500:
+                return "❌ Git command too long (max 500 characters)"
+            
+            # Parse the command
+            parts = shlex.split(clean_cmd)
+            if not parts or parts[0] != 'git':
+                return "❌ Invalid Git command format"
+            
+            # Execute the Git command
+            result = subprocess.run(
+                parts, capture_output=True,
+                text=True, timeout=30,  # Git commands can take longer
+                cwd=os.getcwd()
+            )
+            
+            # Format the output based on command type
+            if result.returncode == 0:
+                output = result.stdout.strip()
+                if not output:
+                    return "✅ Git command executed successfully"
+                
+                # Format specific commands
+                if 'status' in git_cmd:
+                    return self._format_git_status(output)
+                elif 'log' in git_cmd:
+                    return self._format_git_log(output)
+                elif 'diff' in git_cmd:
+                    return self._format_git_diff(output)
+                elif 'branch' in git_cmd and '--list' not in git_cmd:
+                    return self._format_git_branch(output)
+                else:
+                    return output[:2000]  # Limit output size
+            else:
+                error = result.stderr.strip()
+                return f"❌ Git error: {error[:500]}"
+                
+        except subprocess.TimeoutExpired:
+            return "❌ Git command timed out (30s limit)"
+        except Exception as e:
+            return f"❌ Git command failed: {str(e)[:100]}"
+    
+    def _format_git_status(self, output: str) -> str:
+        """Format git status output with colors and structure"""
+        if not output:
+            return "📁 Repository is clean - no changes to commit"
+        
+        lines = output.split('\n')
+        formatted = "📊 Git Status:\n\n"
+        
+        staged = []
+        unstaged = []
+        untracked = []
+        
+        for line in lines:
+            if line.startswith('M '):
+                staged.append(f"📝 Modified: {line[3:]}")
+            elif line.startswith('A '):
+                staged.append(f"➕ Added: {line[3:]}")
+            elif line.startswith('D '):
+                staged.append(f"🗑️  Deleted: {line[3:]}")
+            elif line.startswith('R '):
+                staged.append(f"📋 Renamed: {line[3:]}")
+            elif line.startswith('C '):
+                staged.append(f"📄 Copied: {line[3:]}")
+            elif line.startswith('?? '):
+                untracked.append(f"❓ Untracked: {line[3:]}")
+            elif line.startswith(' M'):
+                unstaged.append(f"📝 Modified: {line[3:]}")
+            elif line.startswith(' D'):
+                unstaged.append(f"🗑️  Deleted: {line[3:]}")
+        
+        if staged:
+            formatted += "✅ Staged Changes:\n" + "\n".join(staged) + "\n\n"
+        if unstaged:
+            formatted += "📝 Unstaged Changes:\n" + "\n".join(unstaged) + "\n\n"
+        if untracked:
+            formatted += "❓ Untracked Files:\n" + "\n".join(untracked) + "\n\n"
+        
+        return formatted
+    
+    def _format_git_log(self, output: str) -> str:
+        """Format git log output with better readability"""
+        if not output:
+            return "📜 No commits found"
+        
+        lines = output.split('\n')
+        formatted = "📜 Commit History:\n\n"
+        
+        for i, line in enumerate(lines[:20]):  # Limit to 20 commits
+            if line.strip():
+                parts = line.split(' ', 1)
+                if len(parts) == 2:
+                    commit_hash = parts[0][:8]
+                    message = parts[1]
+                    formatted += f"🔗 {commit_hash}: {message}\n"
+        
+        if len(lines) > 20:
+            formatted += f"\n... and {len(lines) - 20} more commits"
+        
+        return formatted
+    
+    def _format_git_diff(self, output: str) -> str:
+        """Format git diff output with syntax highlighting"""
+        if not output:
+            return "📄 No differences found"
+        
+        # For now, just return the raw diff with a header
+        # In a more advanced implementation, this could include syntax highlighting
+        return f"📄 Changes:\n\n{output[:3000]}"  # Limit size
+    
+    def _format_git_branch(self, output: str) -> str:
+        """Format git branch output"""
+        if not output:
+            return "🌿 No branches found"
+        
+        lines = output.split('\n')
+        formatted = "🌿 Branches:\n\n"
+        
+        for line in lines:
+            if line.strip():
+                if line.startswith('*'):
+                    formatted += f"🔥 Current: {line[2:]}\n"
+                else:
+                    formatted += f"🌿 Branch: {line.strip()}\n"
+        
+        return formatted
+    
     def process_input(self, user_input: str) -> str:
         try:
             clean_input = self.security.sanitize(user_input)
@@ -716,12 +883,277 @@ class NexusAI:
                 parts = command.split()
                 if len(parts) != 3:
                     return "Usage: /git create-branch [name]"
-                return self.execute_command(f"git branch {parts[2]}")
+                return self.execute_git_command(f"git branch {parts[2]}")
             if cmd.startswith("git delete-branch"):
                 parts = command.split()
                 if len(parts) != 3:
                     return "Usage: /git delete-branch [name]"
-                return self.execute_command(f"git branch -d {parts[2]}")
+                return self.execute_git_command(f"git branch -d {parts[2]}")
+            
+            # --- Advanced Git Commands ---
+            if cmd == "git status":
+                return self.execute_git_command("git status --porcelain")
+            
+            if cmd.startswith("git add"):
+                parts = command.split(maxsplit=2)
+                if len(parts) == 1:
+                    return "Usage: /git add [files] or /git add . for all files"
+                files = parts[1] if len(parts) > 1 else "."
+                return self.execute_git_command(f"git add {files}")
+            
+            if cmd.startswith("git commit"):
+                parts = command.split(maxsplit=2)
+                if len(parts) < 3:
+                    return "Usage: /git commit [message] - Commit staged changes"
+                message = parts[2]
+                return self.execute_git_command(f"git commit -m \"{message}\"")
+            
+            if cmd == "git push":
+                return self.execute_git_command("git push origin HEAD")
+            
+            if cmd == "git pull":
+                return self.execute_git_command("git pull --rebase")
+            
+            if cmd.startswith("git log"):
+                parts = command.split()
+                limit = parts[1] if len(parts) > 1 and parts[1].isdigit() else "10"
+                return self.execute_git_command(f"git log --oneline -{limit}")
+            
+            if cmd == "git diff":
+                return self.execute_git_command("git diff")
+            
+            if cmd == "git diff --staged":
+                return self.execute_git_command("git diff --staged")
+            
+            if cmd == "git branch":
+                return self.execute_git_command("git branch -a")
+            
+            if cmd.startswith("git checkout"):
+                parts = command.split(maxsplit=2)
+                if len(parts) < 3:
+                    return "Usage: /git checkout [branch]"
+                branch = parts[2]
+                return self.execute_git_command(f"git checkout {branch}")
+            
+            if cmd.startswith("git merge"):
+                parts = command.split(maxsplit=2)
+                if len(parts) < 3:
+                    return "Usage: /git merge [branch]"
+                branch = parts[2]
+                return self.execute_git_command(f"git merge {branch}")
+            
+            if cmd == "git stash":
+                return self.execute_git_command("git stash")
+            
+            if cmd == "git stash pop":
+                return self.execute_git_command("git stash pop")
+            
+            if cmd.startswith("git reset"):
+                parts = command.split(maxsplit=3)
+                if len(parts) == 3 and parts[2] == "--hard":
+                    return self.execute_git_command("git reset --hard HEAD")
+                elif len(parts) >= 3:
+                    file_path = parts[2]
+                    return self.execute_git_command(f"git reset HEAD {file_path}")
+                else:
+                    return "Usage: /git reset [file] or /git reset --hard"
+            
+            if cmd == "git remote -v":
+                return self.execute_git_command("git remote -v")
+            
+            if cmd.startswith("git blame"):
+                parts = command.split(maxsplit=2)
+                if len(parts) < 3:
+                    return "Usage: /git blame [file]"
+                file_path = parts[2]
+                return self.execute_git_command(f"git blame {file_path}")
+            
+            if cmd.startswith("git cherry-pick"):
+                parts = command.split(maxsplit=2)
+                if len(parts) < 3:
+                    return "Usage: /git cherry-pick [commit-hash]"
+                commit_hash = parts[2]
+                return self.execute_git_command(f"git cherry-pick {commit_hash}")
+            
+            if cmd.startswith("git rebase"):
+                parts = command.split(maxsplit=2)
+                if len(parts) < 3:
+                    return "Usage: /git rebase [branch]"
+                branch = parts[2]
+                return self.execute_git_command(f"git rebase {branch}")
+            
+            if cmd == "git bisect start":
+                return self.execute_git_command("git bisect start")
+            
+            if cmd.startswith("git tag"):
+                parts = command.split(maxsplit=2)
+                if len(parts) < 3:
+                    return "Usage: /git tag [tag-name]"
+                tag_name = parts[2]
+                return self.execute_git_command(f"git tag {tag_name}")
+            
+            if cmd == "git reflog":
+                return self.execute_git_command("git reflog --oneline -10")
+            
+            # --- Git Workflow Commands ---
+            if cmd.startswith("git new-branch"):
+                parts = command.split(maxsplit=2)
+                if len(parts) < 3:
+                    return "Usage: /git new-branch [name] - Create and switch to new branch"
+                branch_name = parts[2]
+                # Create branch and switch to it
+                create_result = self.execute_git_command(f"git checkout -b {branch_name}")
+                return create_result
+            
+            if cmd == "git undo-last-commit":
+                return self.execute_git_command("git reset --soft HEAD~1")
+            
+            if cmd.startswith("git amend"):
+                parts = command.split(maxsplit=2)
+                if len(parts) < 3:
+                    return "Usage: /git amend [message] - Amend last commit with new message"
+                message = parts[2]
+                return self.execute_git_command(f"git commit --amend -m \"{message}\"")
+            
+            if cmd == "git uncommit":
+                return self.execute_git_command("git reset --soft HEAD~1")
+            
+            if cmd == "git discard":
+                return self.execute_git_command("git checkout -- .")
+            
+            if cmd.startswith("git ignore"):
+                parts = command.split(maxsplit=2)
+                if len(parts) < 3:
+                    return "Usage: /git ignore [pattern] - Add pattern to .gitignore"
+                pattern = parts[2]
+                try:
+                    with open('.gitignore', 'a') as f:
+                        f.write(f"\n{pattern}")
+                    return f"✅ Added '{pattern}' to .gitignore"
+                except Exception as e:
+                    return f"❌ Failed to update .gitignore: {str(e)}"
+            
+            if cmd == "git repo-info":
+                # Get comprehensive repository information
+                info = []
+                
+                # Basic repo info
+                try:
+                    result = subprocess.run(['git', 'remote', 'get-url', 'origin'], 
+                                          capture_output=True, text=True, timeout=10)
+                    if result.returncode == 0:
+                        info.append(f"🌐 Remote URL: {result.stdout.strip()}")
+                except:
+                    pass
+                
+                # Current branch
+                try:
+                    result = subprocess.run(['git', 'branch', '--show-current'], 
+                                          capture_output=True, text=True, timeout=10)
+                    if result.returncode == 0:
+                        info.append(f"🌿 Current Branch: {result.stdout.strip()}")
+                except:
+                    pass
+                
+                # Last commit
+                try:
+                    result = subprocess.run(['git', 'log', '--oneline', '-1'], 
+                                          capture_output=True, text=True, timeout=10)
+                    if result.returncode == 0:
+                        info.append(f"📝 Last Commit: {result.stdout.strip()}")
+                except:
+                    pass
+                
+                # Status summary
+                try:
+                    result = subprocess.run(['git', 'status', '--porcelain'], 
+                                          capture_output=True, text=True, timeout=10)
+                    if result.returncode == 0:
+                        lines = result.stdout.strip().split('\n')
+                        staged = len([l for l in lines if l and not l.startswith(' ')])
+                        unstaged = len([l for l in lines if l and l.startswith(' ')])
+                        untracked = len([l for l in lines if l and l.startswith('??')])
+                        info.append(f"📊 Changes: {staged} staged, {unstaged} unstaged, {untracked} untracked")
+                except:
+                    pass
+                
+                if info:
+                    return "📋 Repository Information:\n" + "\n".join(info)
+                else:
+                    return "❌ Could not retrieve repository information"
+            
+            # --- Additional Git Commands ---
+            if cmd == "git init":
+                return self.execute_git_command("git init")
+            
+            if cmd.startswith("git clone"):
+                parts = command.split(maxsplit=2)
+                if len(parts) < 3:
+                    return "Usage: /git clone [url] - Clone a repository"
+                url = parts[2]
+                return self.execute_git_command(f"git clone {url}")
+            
+            if cmd == "git fetch":
+                return self.execute_git_command("git fetch --all")
+            
+            if cmd.startswith("git pull-request"):
+                return "💡 To create a pull request, push your branch and use your Git hosting service (GitHub, GitLab, etc.)"
+            
+            if cmd == "git contributors":
+                return self.execute_git_command("git shortlog -sn --no-merges")
+            
+            if cmd == "git file-history":
+                return "Usage: /git file-history [filename] - Show history of a specific file"
+            
+            if cmd.startswith("git file-history"):
+                parts = command.split(maxsplit=2)
+                if len(parts) < 3:
+                    return "Usage: /git file-history [filename] - Show history of a specific file"
+                filename = parts[2]
+                return self.execute_git_command(f"git log --follow --oneline {filename}")
+            
+            if cmd == "git clean":
+                return self.execute_git_command("git clean -fd")
+            
+            if cmd == "git stats":
+                # Get repository statistics
+                stats = []
+                try:
+                    # Total commits
+                    result = subprocess.run(['git', 'rev-list', '--count', 'HEAD'], 
+                                          capture_output=True, text=True, timeout=10)
+                    if result.returncode == 0:
+                        stats.append(f"📊 Total Commits: {result.stdout.strip()}")
+                except:
+                    pass
+                
+                try:
+                    # Contributors count
+                    result = subprocess.run(['git', 'shortlog', '-sn', '--no-merges'], 
+                                          capture_output=True, text=True, timeout=10)
+                    if result.returncode == 0:
+                        lines = result.stdout.strip().split('\n')
+                        stats.append(f"👥 Contributors: {len(lines)}")
+                except:
+                    pass
+                
+                try:
+                    # Repository size
+                    result = subprocess.run(['git', 'count-objects', '-vH'], 
+                                          capture_output=True, text=True, timeout=10)
+                    if result.returncode == 0:
+                        for line in result.stdout.split('\n'):
+                            if 'size-pack:' in line:
+                                stats.append(f"💾 Repository Size: {line.split(':')[1].strip()}")
+                                break
+                except:
+                    pass
+                
+                if stats:
+                    return "📈 Repository Statistics:\n" + "\n".join(stats)
+                else:
+                    return "❌ Could not retrieve repository statistics"
+            
             # --- AI Code Review ---
             if cmd.startswith("codereview"):
                 parts = command.split()
@@ -875,6 +1307,45 @@ class NexusAI:
                     help_text.append("/password [length]  - Generate a secure password\n", style="white")
                     help_text.append("/tip                - Get a random productivity tip\n", style="white")
                     help_text.append("/clear              - Clear the screen\n\n", style="white")
+                    
+                    help_text.append("🔀 GIT VERSION CONTROL:\n", style="bold yellow")
+                    help_text.append("/git status            - Show repository status\n", style="white")
+                    help_text.append("/git add [files]       - Stage files for commit\n", style="white")
+                    help_text.append("/git commit [message]  - Commit staged changes\n", style="white")
+                    help_text.append("/git push              - Push commits to remote\n", style="white")
+                    help_text.append("/git pull              - Pull changes from remote\n", style="white")
+                    help_text.append("/git log [n]           - Show commit history\n", style="white")
+                    help_text.append("/git diff              - Show unstaged changes\n", style="white")
+                    help_text.append("/git diff --staged     - Show staged changes\n", style="white")
+                    help_text.append("/git branch            - List branches\n", style="white")
+                    help_text.append("/git checkout [branch] - Switch to branch\n", style="white")
+                    help_text.append("/git merge [branch]    - Merge branch into current\n", style="white")
+                    help_text.append("/git stash             - Stash current changes\n", style="white")
+                    help_text.append("/git stash pop         - Apply stashed changes\n", style="white")
+                    help_text.append("/git reset [file]      - Unstage file\n", style="white")
+                    help_text.append("/git reset --hard      - Reset to last commit\n", style="white")
+                    help_text.append("/git remote -v         - Show remote repositories\n", style="white")
+                    help_text.append("/git blame [file]      - Show who changed each line\n", style="white")
+                    help_text.append("/git cherry-pick [hash] - Apply specific commit\n", style="white")
+                    help_text.append("/git rebase [branch]   - Rebase current branch\n", style="white")
+                    help_text.append("/git bisect start      - Start binary search for bugs\n", style="white")
+                    help_text.append("/git tag [name]        - Create a tag\n", style="white")
+                    help_text.append("/git reflog            - Show reference log\n", style="white")
+                    help_text.append("/git new-branch [name] - Create and switch to new branch\n", style="white")
+                    help_text.append("/git undo-last-commit  - Undo last commit (keep changes)\n", style="white")
+                    help_text.append("/git amend [message]   - Amend last commit message\n", style="white")
+                    help_text.append("/git uncommit          - Uncommit but keep changes staged\n", style="white")
+                    help_text.append("/git discard           - Discard all unstaged changes\n", style="white")
+                    help_text.append("/git ignore [pattern]  - Add pattern to .gitignore\n", style="white")
+                    help_text.append("/git repo-info         - Show comprehensive repo information\n", style="white")
+                    help_text.append("/git init              - Initialize a new Git repository\n", style="white")
+                    help_text.append("/git clone [url]       - Clone a repository\n", style="white")
+                    help_text.append("/git fetch             - Fetch all branches from remote\n", style="white")
+                    help_text.append("/git contributors      - Show contributors by commit count\n", style="white")
+                    help_text.append("/git file-history [f]  - Show history of a specific file\n", style="white")
+                    help_text.append("/git clean             - Remove untracked files\n", style="white")
+                    help_text.append("/git stats             - Show repository statistics\n\n", style="white")
+
                     help_text.append("💡 EXAMPLES:\n", style="bold green")
                     help_text.append("• Write a Python function to sort a list\n", style="cyan")
                     help_text.append("• /switch ollama llama2:13b\n", style="cyan")
@@ -923,6 +1394,46 @@ class NexusAI:
                     help_text.append("/secure-password [len]  - Generate secure passwords\n", style="white")
                     help_text.append("/security-report        - View security report\n", style="white")
                     help_text.append("/threat-scan [text]     - Scan for security threats\n\n", style="white")
+
+                    help_text.append("🎨 THEME MANAGEMENT:\n", style="bold yellow")
+                    help_text.append("/themes                  - List all available themes\n", style="white")
+                    help_text.append("/theme set [name]        - Switch to a theme\n", style="white")
+                    help_text.append("/theme current           - Show current theme\n", style="white")
+                    help_text.append("/theme preview [name]    - Preview a theme\n", style="white")
+                    help_text.append("/theme create [name] [base] - Create custom theme\n", style="white")
+                    help_text.append("/theme delete [name]     - Delete custom theme\n", style="white")
+                    help_text.append("/theme export [name] [fmt] - Export theme (json/python)\n", style="white")
+                    help_text.append("/theme stats             - Show theme statistics\n", style="white")
+                    help_text.append("/theme reset             - Reset to default theme\n\n", style="white")
+
+                    help_text.append("� CODE REVIEW ASSISTANT:\n", style="bold yellow")
+                    help_text.append("/review analyze [file]   - Full code analysis\n", style="white")
+                    help_text.append("/review security [file]  - Security analysis only\n", style="white")
+                    help_text.append("/review performance [file] - Performance analysis only\n", style="white")
+                    help_text.append("/review quality [file]   - Quality metrics only\n", style="white")
+                    help_text.append("/review compare [f1] [f2] - Compare two files\n", style="white")
+                    help_text.append("/review suggest [file]   - AI improvement suggestions\n", style="white")
+                    help_text.append("/review language [file]  - Detect programming language\n", style="white")
+                    help_text.append("/review history          - Recent review history\n", style="white")
+                    help_text.append("/review stats            - Review statistics\n\n", style="white")
+
+                    help_text.append("�📝 TASK MANAGEMENT:\n", style="bold yellow")
+                    help_text.append("/task add [title]       - Add a new task\n", style="white")
+                    help_text.append("/task create [title]    - Create a new task\n", style="white")
+                    help_text.append("/tasks                  - List all pending tasks\n", style="white")
+                    help_text.append("/task show [id]         - Show task details\n", style="white")
+                    help_text.append("/task complete [id]     - Mark task as completed\n", style="white")
+                    help_text.append("/task delete [id]       - Delete a task\n", style="white")
+                    help_text.append("/task update [id] [field] [value] - Update task field\n", style="white")
+                    help_text.append("/task priority [id] [priority] - Set priority (low/medium/high/urgent)\n", style="white")
+                    help_text.append("/task category [id] [category] - Set task category\n", style="white")
+                    help_text.append("/task due [id] [date]   - Set due date (YYYY-MM-DD)\n", style="white")
+                    help_text.append("/task subtask add [task_id] [title] - Add subtask\n", style="white")
+                    help_text.append("/task subtask complete [task_id] [subtask_id] - Complete subtask\n", style="white")
+                    help_text.append("/task stats             - Show task statistics\n", style="white")
+                    help_text.append("/task search [query]    - Search tasks\n", style="white")
+                    help_text.append("/task overdue           - Show overdue tasks\n", style="white")
+                    help_text.append("/task export [format]   - Export tasks (json/csv)\n\n", style="white")
 
                     console.print(Panel(help_text, border_style="bright_green", padding=(1, 2)))
                     return ""
@@ -1112,6 +1623,474 @@ class NexusAI:
                     return self.context_ai.complete_reminder(index)
                 except ValueError:
                     return "❌ Invalid reminder number"
+
+            # --- Theme Management ---
+            if cmd == "themes":
+                if not self.theme_manager:
+                    return "❌ Theme Manager module not available"
+                return self.theme_manager.list_themes()
+
+            if cmd.startswith("theme set"):
+                parts = command.split()
+                if len(parts) != 3:
+                    return "Usage: /theme set [theme_name] - Switch to a theme"
+                if not self.theme_manager:
+                    return "❌ Theme Manager module not available"
+                result = self.theme_manager.set_current_theme(parts[2])
+                # Update console theme immediately
+                update_console_theme(self.theme_manager)
+                return result
+
+            if cmd == "theme current":
+                if not self.theme_manager:
+                    return "❌ Theme Manager module not available"
+                theme = self.theme_manager.get_current_theme()
+                return f"🎨 Current Theme: {theme['name']} - {theme['description']}"
+
+            if cmd.startswith("theme preview"):
+                parts = command.split()
+                if len(parts) != 3:
+                    return "Usage: /theme preview [theme_name] - Preview a theme"
+                if not self.theme_manager:
+                    return "❌ Theme Manager module not available"
+                return self.theme_manager.preview_theme(parts[2])
+
+            if cmd.startswith("theme create"):
+                parts = command.split(maxsplit=2)
+                if len(parts) < 3:
+                    return "Usage: /theme create [name] [base_theme] - Create custom theme"
+                if not self.theme_manager:
+                    return "❌ Theme Manager module not available"
+                return self.theme_manager.create_custom_theme(parts[2], parts[3] if len(parts) > 3 else "dark")
+
+            if cmd.startswith("theme delete"):
+                parts = command.split()
+                if len(parts) != 3:
+                    return "Usage: /theme delete [theme_name] - Delete custom theme"
+                if not self.theme_manager:
+                    return "❌ Theme Manager module not available"
+                return self.theme_manager.delete_custom_theme(parts[2])
+
+            if cmd.startswith("theme export"):
+                parts = command.split()
+                format_type = parts[2] if len(parts) > 2 else "json"
+                if len(parts) < 3:
+                    return "Usage: /theme export [theme_name] [format] - Export theme (json/python)"
+                if not self.theme_manager:
+                    return "❌ Theme Manager module not available"
+                return self.theme_manager.export_theme(parts[2], format_type)
+
+            if cmd == "theme stats":
+                if not self.theme_manager:
+                    return "❌ Theme Manager module not available"
+                return self.theme_manager.get_theme_stats()
+
+            if cmd == "theme reset":
+                if not self.theme_manager:
+                    return "❌ Theme Manager module not available"
+                result = self.theme_manager.reset_to_default()
+                # Update console theme immediately
+                update_console_theme(self.theme_manager)
+                return result
+
+            # --- Code Review Assistant ---
+            if cmd.startswith("review analyze"):
+                parts = command.split()
+                if len(parts) != 3:
+                    return "Usage: /review analyze [file] - Analyze code quality"
+                if not self.code_reviewer:
+                    return "❌ Code Review Assistant module not available"
+                analysis = self.code_reviewer.analyze_file(parts[2])
+                return self.code_reviewer.generate_review_report(analysis)
+
+            if cmd.startswith("review security"):
+                parts = command.split()
+                if len(parts) != 3:
+                    return "Usage: /review security [file] - Security analysis only"
+                if not self.code_reviewer:
+                    return "❌ Code Review Assistant module not available"
+                analysis = self.code_reviewer.analyze_file(parts[2], "security")
+                return self.code_reviewer.generate_review_report(analysis)
+
+            if cmd.startswith("review performance"):
+                parts = command.split()
+                if len(parts) != 3:
+                    return "Usage: /review performance [file] - Performance analysis only"
+                if not self.code_reviewer:
+                    return "❌ Code Review Assistant module not available"
+                analysis = self.code_reviewer.analyze_file(parts[2], "performance")
+                return self.code_reviewer.generate_review_report(analysis)
+
+            if cmd.startswith("review quality"):
+                parts = command.split()
+                if len(parts) != 3:
+                    return "Usage: /review quality [file] - Quality metrics only"
+                if not self.code_reviewer:
+                    return "❌ Code Review Assistant module not available"
+                analysis = self.code_reviewer.analyze_file(parts[2], "quality")
+                return self.code_reviewer.generate_review_report(analysis)
+
+            if cmd.startswith("review compare"):
+                parts = command.split()
+                if len(parts) != 4:
+                    return "Usage: /review compare [file1] [file2] - Compare two files"
+                if not self.code_reviewer:
+                    return "❌ Code Review Assistant module not available"
+                comparison = self.code_reviewer.compare_files(parts[2], parts[3])
+                if "error" in comparison:
+                    return f"❌ {comparison['error']}"
+                output = f"📊 File Comparison Results:\n\n"
+                output += f"📁 File 1: {comparison['file1']}\n"
+                output += f"📁 File 2: {comparison['file2']}\n"
+                output += f"📏 Lines: {comparison['file1_lines']} → {comparison['file2_lines']}\n"
+                output += f"📈 Difference: {comparison['line_difference']} lines\n"
+                output += f"🔗 Similarity: {comparison['similarity_score']}%\n"
+                return output
+
+            if cmd == "review history":
+                if not self.code_reviewer:
+                    return "❌ Code Review Assistant module not available"
+                history = self.code_reviewer.get_review_history(10)
+                if not history:
+                    return "📝 No review history found"
+                output = "📋 Recent Code Reviews:\n\n"
+                for i, review in enumerate(history[-10:], 1):
+                    output += f"{i}. 📁 {review['file_path']}\n"
+                    output += f"   🗣️ {review['language']} | 📅 {review['timestamp'][:10]}\n"
+                    if "quality_metrics" in review and "quality_score" in review["quality_metrics"]:
+                        score = review["quality_metrics"]["quality_score"]
+                        output += f"   📊 Quality: {score}/100\n"
+                    output += "\n"
+                return output
+
+            if cmd == "review stats":
+                if not self.code_reviewer:
+                    return "❌ Code Review Assistant module not available"
+                stats = self.code_reviewer.get_review_stats()
+                output = "📊 Code Review Statistics:\n\n"
+                output += f"📝 Total Reviews: {stats['total_reviews']}\n"
+                output += f"🗣️ Languages: {', '.join(stats.get('languages_reviewed', []))}\n"
+                output += f"📊 Avg Quality Score: {stats.get('avg_quality_score', 0)}/100\n"
+                output += f"🔒 Security Issues Found: {stats.get('security_issues_found', 0)}\n"
+                output += f"⚡ Performance Suggestions: {stats.get('performance_suggestions', 0)}\n"
+                return output
+
+            if cmd.startswith("review suggest"):
+                parts = command.split(maxsplit=1)
+                if len(parts) != 2:
+                    return "Usage: /review suggest [file] - Get AI-powered improvement suggestions"
+                if not self.code_reviewer:
+                    return "❌ Code Review Assistant module not available"
+                if not os.path.exists(parts[1]):
+                    return f"❌ File not found: {parts[1]}"
+                try:
+                    with open(parts[1], 'r') as f:
+                        code = f.read(2000)  # Limit to 2000 chars for AI processing
+                    return self.ai.query(self.current_model, f"Review this code and provide improvement suggestions:\n\n```{self.code_reviewer.detect_language(parts[1])}\n{code}\n```")
+                except Exception as e:
+                    return f"❌ Error reading file: {str(e)}"
+
+            if cmd.startswith("review language"):
+                parts = command.split()
+                if len(parts) != 3:
+                    return "Usage: /review language [file] - Detect programming language"
+                if not self.code_reviewer:
+                    return "❌ Code Review Assistant module not available"
+                language = self.code_reviewer.detect_language(parts[2])
+                if language:
+                    return f"🗣️ Detected Language: {language.upper()}"
+                else:
+                    return f"❓ Could not detect language for: {parts[2]}"
+
+            # --- Integration Hub ---
+            if cmd == "integrate":
+                if not self.integration_hub:
+                    return "❌ Integration Hub module not available"
+                return "🔗 Integration Hub Commands:\n" \
+                       "• /integrate list - List configured services\n" \
+                       "• /integrate supported - List supported services\n" \
+                       "• /integrate add [service] - Add a service\n" \
+                       "• /integrate remove [service] - Remove a service\n" \
+                       "• /integrate test [service] - Test connection\n" \
+                       "• /integrate info [service] - Service information\n" \
+                       "• /integrate action [service] [action] - Execute action"
+
+            if cmd == "integrate list":
+                if not self.integration_hub:
+                    return "❌ Integration Hub module not available"
+                return self.integration_hub.list_services()
+
+            if cmd == "integrate supported":
+                if not self.integration_hub:
+                    return "❌ Integration Hub module not available"
+                return self.integration_hub.list_supported_services()
+
+            if cmd.startswith("integrate add"):
+                parts = command.split(maxsplit=2)
+                if len(parts) < 3:
+                    return "Usage: /integrate add [service] [config_json] - Add service integration"
+                if not self.integration_hub:
+                    return "❌ Integration Hub module not available"
+                try:
+                    config = json.loads(parts[2])
+                    return self.integration_hub.add_service(parts[1], config)
+                except json.JSONDecodeError:
+                    return "❌ Invalid JSON configuration"
+
+            if cmd.startswith("integrate remove"):
+                parts = command.split()
+                if len(parts) != 3:
+                    return "Usage: /integrate remove [service] - Remove service integration"
+                if not self.integration_hub:
+                    return "❌ Integration Hub module not available"
+                return self.integration_hub.remove_service(parts[2])
+
+            if cmd.startswith("integrate test"):
+                parts = command.split()
+                if len(parts) != 3:
+                    return "Usage: /integrate test [service] - Test service connection"
+                if not self.integration_hub:
+                    return "❌ Integration Hub module not available"
+                return self.integration_hub.test_connection(parts[2])
+
+            if cmd.startswith("integrate info"):
+                parts = command.split()
+                if len(parts) != 3:
+                    return "Usage: /integrate info [service] - Get service information"
+                if not self.integration_hub:
+                    return "❌ Integration Hub module not available"
+                return self.integration_hub.get_service_info(parts[2])
+
+            if cmd.startswith("integrate action"):
+                parts = command.split(maxsplit=3)
+                if len(parts) < 4:
+                    return "Usage: /integrate action [service] [action] [params_json] - Execute service action"
+                if not self.integration_hub:
+                    return "❌ Integration Hub module not available"
+                try:
+                    params = json.loads(parts[3]) if len(parts) > 3 else {}
+                    return self.integration_hub.execute_service_action(parts[1], parts[2], **params)
+                except json.JSONDecodeError:
+                    return "❌ Invalid JSON parameters"
+
+            if cmd == "integrate stats":
+                if not self.integration_hub:
+                    return "❌ Integration Hub module not available"
+                stats = self.integration_hub.get_integration_stats()
+                output = "📊 Integration Statistics:\n\n"
+                output += f"🔗 Configured Services: {stats['total_services']}\n"
+                output += f"🚀 Supported Services: {stats['supported_services']}\n"
+                output += f"🟢 Connected Services: {stats['connected_services']}\n"
+                output += f"🔴 Failed Connections: {stats['failed_connections']}\n"
+                output += f"🪝 Total Webhooks: {stats['total_webhooks']}\n"
+                output += f"✅ Active Webhooks: {stats['active_webhooks']}\n"
+                return output
+
+            if cmd == "webhooks":
+                if not self.integration_hub:
+                    return "❌ Integration Hub module not available"
+                return self.integration_hub.list_webhooks()
+
+            if cmd.startswith("webhook add"):
+                parts = command.split(maxsplit=3)
+                if len(parts) < 4:
+                    return "Usage: /webhook add [service] [url] [events_json] - Add webhook"
+                if not self.integration_hub:
+                    return "❌ Integration Hub module not available"
+                try:
+                    events = json.loads(parts[3])
+                    return self.integration_hub.setup_webhook(parts[1], parts[2], events)
+                except json.JSONDecodeError:
+                    return "❌ Invalid JSON events list"
+
+            # --- Task Management ---
+            if cmd.startswith("task add"):
+                parts = command.split(maxsplit=1)
+                if len(parts) != 2:
+                    return "Usage: /task add [title] - Add a new task"
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                return self.task_manager.create_task(parts[1])
+
+            if cmd.startswith("task create"):
+                parts = command.split(maxsplit=1)
+                if len(parts) != 2:
+                    return "Usage: /task create [title] - Create a new task"
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                return self.task_manager.create_task(parts[1])
+
+            if cmd == "tasks":
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                tasks = self.task_manager.get_tasks(status="pending", limit=20)
+                if not tasks:
+                    return "📝 No pending tasks found"
+                output = "📋 Your Tasks:\n\n"
+                for i, task in enumerate(tasks, 1):
+                    priority_icon = {"low": "🟢", "medium": "🟡", "high": "🔴", "urgent": "🟣"}.get(task["priority"], "⚪")
+                    category_icon = self.task_manager.categories.get(task["category"], {}).get("icon", "📝")
+                    output += f"{i}. {priority_icon} {category_icon} {task['title']}\n"
+                    if task.get("due_date"):
+                        due_date = datetime.fromtimestamp(float(task["due_date"])).strftime("%Y-%m-%d")
+                        output += f"   📅 Due: {due_date}\n"
+                    output += "\n"
+                return output
+
+            if cmd.startswith("task show"):
+                parts = command.split()
+                if len(parts) != 3:
+                    return "Usage: /task show [id] - Show task details"
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                task = self.task_manager.get_task_by_id(parts[2])
+                if not task:
+                    return f"❌ Task not found: {parts[2]}"
+                output = f"📝 Task Details: {task['title']}\n\n"
+                output += f"ID: {task['id']}\n"
+                output += f"Status: {task['status'].upper()}\n"
+                output += f"Priority: {task['priority'].upper()}\n"
+                output += f"Category: {task['category'].title()}\n"
+                if task.get("description"):
+                    output += f"Description: {task['description']}\n"
+                if task.get("due_date"):
+                    due_date = datetime.fromtimestamp(float(task["due_date"])).strftime("%Y-%m-%d %H:%M")
+                    output += f"Due Date: {due_date}\n"
+                if task.get("tags"):
+                    output += f"Tags: {', '.join(task['tags'])}\n"
+                if task.get("subtasks"):
+                    output += "Subtasks:\n"
+                    for subtask in task["subtasks"]:
+                        status = "✅" if subtask["completed"] else "❌"
+                        output += f"  {status} {subtask['title']}\n"
+                return output
+
+            if cmd.startswith("task complete"):
+                parts = command.split()
+                if len(parts) != 3:
+                    return "Usage: /task complete [id] - Mark task as completed"
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                return self.task_manager.complete_task(parts[2])
+
+            if cmd.startswith("task delete"):
+                parts = command.split()
+                if len(parts) != 3:
+                    return "Usage: /task delete [id] - Delete a task"
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                return self.task_manager.delete_task(parts[2])
+
+            if cmd.startswith("task update"):
+                parts = command.split(maxsplit=3)
+                if len(parts) < 4:
+                    return "Usage: /task update [id] [field] [value] - Update task field"
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                task_id, field, value = parts[2], parts[3], " ".join(parts[4:])
+                return self.task_manager.update_task(task_id, **{field: value})
+
+            if cmd.startswith("task priority"):
+                parts = command.split()
+                if len(parts) != 4:
+                    return "Usage: /task priority [id] [priority] - Set task priority (low/medium/high/urgent)"
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                return self.task_manager.update_task(parts[2], priority=parts[3])
+
+            if cmd.startswith("task category"):
+                parts = command.split()
+                if len(parts) != 4:
+                    return "Usage: /task category [id] [category] - Set task category"
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                return self.task_manager.update_task(parts[2], category=parts[3])
+
+            if cmd.startswith("task due"):
+                parts = command.split()
+                if len(parts) != 4:
+                    return "Usage: /task due [id] [date] - Set due date (YYYY-MM-DD)"
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                try:
+                    due_timestamp = datetime.strptime(parts[3], "%Y-%m-%d").timestamp()
+                    return self.task_manager.update_task(parts[2], due_date=due_timestamp)
+                except ValueError:
+                    return "❌ Invalid date format. Use YYYY-MM-DD"
+
+            if cmd.startswith("task subtask add"):
+                parts = command.split(maxsplit=3)
+                if len(parts) < 4:
+                    return "Usage: /task subtask add [task_id] [title] - Add subtask"
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                return self.task_manager.add_subtask(parts[3], " ".join(parts[4:]))
+
+            if cmd.startswith("task subtask complete"):
+                parts = command.split()
+                if len(parts) != 5:
+                    return "Usage: /task subtask complete [task_id] [subtask_id] - Complete subtask"
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                return self.task_manager.complete_subtask(parts[3], parts[4])
+
+            if cmd == "task stats":
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                stats = self.task_manager.get_task_stats()
+                if "error" in stats:
+                    return f"❌ {stats['error']}"
+                output = "📊 Task Statistics:\n\n"
+                output += f"Total Tasks: {stats['total_tasks']}\n"
+                output += f"Completed: {stats['completed_tasks']}\n"
+                output += f"Pending: {stats['pending_tasks']}\n"
+                output += ".1f"
+                output += "\nPriority Breakdown:\n"
+                for priority, count in stats['priority_breakdown'].items():
+                    output += f"  {priority.title()}: {count}\n"
+                output += "\nCategory Breakdown:\n"
+                for category, count in stats['category_breakdown'].items():
+                    output += f"  {category.title()}: {count}\n"
+                return output
+
+            if cmd.startswith("task search"):
+                parts = command.split(maxsplit=1)
+                if len(parts) != 2:
+                    return "Usage: /task search [query] - Search tasks"
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                results = self.task_manager.search_tasks(parts[1])
+                if not results:
+                    return f"🔍 No tasks found matching: {parts[1]}"
+                output = f"🔍 Search Results for '{parts[1]}':\n\n"
+                for task in results[:10]:
+                    output += f"📝 {task['title']} (ID: {task['id']})\n"
+                    output += f"   Status: {task['status']} | Priority: {task['priority']}\n\n"
+                return output
+
+            if cmd == "task overdue":
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                overdue = self.task_manager.get_overdue_tasks()
+                if not overdue:
+                    return "✅ No overdue tasks!"
+                output = "⚠️ Overdue Tasks:\n\n"
+                for task in overdue:
+                    due_date = datetime.fromtimestamp(float(task["due_date"])).strftime("%Y-%m-%d")
+                    output += f"📝 {task['title']} (ID: {task['id']})\n"
+                    output += f"   Was due: {due_date}\n\n"
+                return output
+
+            if cmd.startswith("task export"):
+                parts = command.split()
+                format_type = parts[1] if len(parts) > 1 else "json"
+                if not self.task_manager:
+                    return "❌ Task Manager module not available"
+                export_data = self.task_manager.export_tasks(format_type)
+                if format_type == "json":
+                    return f"📄 JSON Export:\n{export_data}"
+                else:
+                    return f"📄 CSV Export:\n{export_data}"
 
             # --- Analytics & Monitoring ---
             if cmd == "analytics":
