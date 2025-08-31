@@ -213,7 +213,7 @@ class AIManager:
         
     def _create_session(self) -> requests.Session:
         session = requests.Session()
-        session.verify = True
+        session.verify = TrueD
         session.timeout = REQUEST_TIMEOUT
         session.headers.update({
             'User-Agent': f'NexusAI/{VERSION}',
