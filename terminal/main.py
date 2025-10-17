@@ -213,8 +213,9 @@ class AIManager:
         
     def _create_session(self) -> requests.Session:
         session = requests.Session()
-        session.verify = TrueD
-        session.timeout = REQUEST_TIMEOUT
+        # Ensure TLS verification is enabled. Do not set a global timeout on Session;
+        # timeouts should be applied per-request to avoid unexpected behavior.
+        session.verify = True
         session.headers.update({
             'User-Agent': f'NexusAI/{VERSION}',
             'Accept': 'application/json'
@@ -451,8 +452,18 @@ class UserManager:
             json.dump(self.user_db, f)
         os.chmod(USER_DB_PATH, 0o600)
 
-    def hash_password(self, password):
-        return hashlib.sha256(password.encode()).hexdigest()
+    def hash_password(self, password) -> str:
+        """Hash a password using bcrypt (via passlib). If passlib isn't available,
+        fall back to SHA256 for compatibility (but log a warning).
+        New hashes will use bcrypt; legacy SHA256 hashes will be detected and migrated on login.
+        """
+        try:
+            from passlib.hash import bcrypt
+        except Exception:
+            logging.warning("passlib not available; falling back to SHA256 (insecure)")
+            return hashlib.sha256(password.encode()).hexdigest()
+
+        return bcrypt.hash(password)
 
     def signup(self, username, password, is_admin=False):
         if username in self.user_db:
@@ -469,6 +480,20 @@ class UserManager:
     def login(self, username, password):
         user = self.user_db.get(username)
         if not user or user["password"] != self.hash_password(password):
+            # Try legacy SHA256 validation if passlib bcrypt is used in storage
+            stored = user["password"] if user else None
+            if stored and isinstance(stored, str) and len(stored) == 64:
+                # Legacy sha256 hex digest
+                if stored == hashlib.sha256(password.encode()).hexdigest():
+                    # Re-hash with bcrypt and store
+                    try:
+                        new_hash = self.hash_password(password)
+                        self.user_db[username]["password"] = new_hash
+                        self._save_users()
+                    except Exception:
+                        pass
+                    self.current_user = username
+                    return True, f"Welcome, {username}! (password migrated)"
             return False, "Invalid username or password."
         self.current_user = username
         return True, f"Welcome, {username}!"
