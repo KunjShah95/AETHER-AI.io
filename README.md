@@ -33,14 +33,30 @@ Production‑ready, secure, multi‑model AI for your terminal. Switch between G
 
 Choose the option that fits your environment.
 
-### Option A: One‑click OS scripts
+### Option A: One‑click OS scripts (consolidated)
 
-- Windows (PowerShell or CMD):
-  - Minimal dependencies: `install_minimal.bat`
-  - Full feature set: `install_advanced.bat`
-  - Standard: `install.bat`
-- macOS: `bash install_mac.sh`
-- Linux: `bash install_linux.sh`
+- We now provide a single canonical installer per platform under `dist/`.
+- Recommended files:
+  - Windows: `dist/install_windows.bat`
+  - macOS: `dist/install_mac.sh`
+  - Linux: `dist/install_linux.sh`
+
+Before running an installer, verify the SHA256 checksum in `dist/SHA256SUMS.txt`:
+
+
+Windows (PowerShell):
+
+```powershell
+Get-FileHash -Algorithm SHA256 .\dist\install_windows.bat
+```
+
+macOS / Linux:
+
+```bash
+sha256sum dist/install_mac.sh
+```
+
+If checksums match the entries in `dist/SHA256SUMS.txt`, you can run the installer.
 
 ### Option B: From source (recommended for development)
 
@@ -65,7 +81,7 @@ python terminal/main.py
 
 Create and edit a `.env` file at the project root with the following variables:
 
-```
+```env
 GEMINI_API_KEY=...
 GROQ_API_KEY=...
 HUGGINGFACE_TOKEN=...
@@ -187,7 +203,7 @@ Distribute the binary and provide instructions to set environment variables (or 
 
 ## Project Structure
 
-```
+```text
 NEXUS-AI.io/
 ├── index.html                # Website homepage
 ├── app.js                    # Website functionality

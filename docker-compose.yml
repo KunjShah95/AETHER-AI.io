@@ -1,13 +1,23 @@
 version: "3.8"
+
 services:
   aetherai:
-    build: .
-    image: aetherai:latest
-    container_name: aetherai
+    build:
+      context: ./terminal
+      dockerfile: Dockerfile
+    image: aetherai:local
+    container_name: aetherai_cli
+    # Mount repository for rapid iteration (bind mount, use with caution on Windows)
+    volumes:
+      - ./terminal:/app:rw
     tty: true
     stdin_open: true
-    volumes:
-      - ./:/app
     environment:
       - PYTHONUNBUFFERED=1
-    command: ["aetherai"]
+      - TERM=xterm-256color
+    # Keep the CLI interactive by default; override the command to run inline scripts
+    command: ["python", "main.py"]
+    # Optional: map a local port if any HTTP admin API added later
+    ports:
+      - "8080:8080"
+    restart: unless-stopped

@@ -34,8 +34,7 @@ SpeechRecognition==3.10.0
 # YAML configuration (secure parsing)
 PyYAML==6.0.1
 
-# Web search (optional)
-googlesearch-python==1.2.0
+
 
 # System notifications (cross-platform, optional)
 plyer==2.1.0
@@ -60,8 +59,18 @@ ipykernel==6.29.4            # IPython kernel for code execution
 jedi==0.19.1                 # Code completion and analysis
 black==24.4.2                # Code formatting
 flake8==7.0.0                # Code linting
-mypy==1.10.0                 # Type checking
-autopep8==2.3.1              # Code auto-formatting
+mypy==1.10.0                # Type checking
+# autopep8==2.3.1              # Code auto-formatting
+# NOTE: `autopep8==2.3.1` requires pycodestyle>=2.12.0 which conflicts with
+# `flake8==7.0.0` (flake8 pins pycodestyle<2.12.0,>=2.11.0). To avoid build-time
+# dependency conflicts in the container image, the formatting tool is commented
+# out here. Recommended approaches:
+#  - Move dev tooling (flake8, autopep8, mypy, black) into `requirements-dev.txt`
+#    and only install that file in development environments, or
+#  - Use a single formatting/linting stack compatible with the same pycodestyle
+#    range (choose matching versions), or
+#  - Install formatting tools on your host environment (outside Docker) where
+#    you control versions independently from the runtime image.
 
 # Testing & Quality Assurance
 pytest==8.2.2                # Testing framework
@@ -116,7 +125,8 @@ nltk==3.8.1                  # Natural language processing
 # Security-focused dependencies
 cryptography==42.0.8         # For secure operations
 idna==3.7                    # Internationalized domain names
-passlib==1.9.0               # Password hashing (bcrypt)
+# Use a widely compatible passlib release and enable bcrypt extras
+passlib[bcrypt]==1.7.4       # Password hashing (bcrypt) - pinned for compatibility
 
 # Development and testing (commented out for production)
 # structlog==24.2.0          # Structured logging for security events

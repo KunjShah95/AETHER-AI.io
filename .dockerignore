@@ -1,0 +1,11 @@
+# .dockerignore – exclude unnecessary files from the build context
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+*.egg-info/
+.git
+.gitignore
+.DS_Store

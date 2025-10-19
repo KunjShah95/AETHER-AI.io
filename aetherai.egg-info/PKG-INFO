@@ -1,3 +1,5 @@
+# NEXUS AI Package Info
+
 Metadata-Version: 2.4
 Name: aetherai
 Version: 0.1.0
@@ -81,18 +83,20 @@ Choose the option that fits your environment.
 ### Option B: From source (recommended for development)
 
 ```bash
-# Clone
-git clone https://github.com/KunjShah95/NEXUS-AI.io.git
-cd NEXUS-AI.io
+### Option B: From source (recommended for development)
 
-# Install dependencies
-pip install -r requirements.txt
+    # Clone
+    git clone https://github.com/KunjShah95/NEXUS-AI.io.git
+    cd NEXUS-AI.io
 
-# Configure environment
-cp .env.example .env   # set your API keys; see below
+    # Install dependencies
+    pip install -r requirements.txt
 
-# Run
-python terminal/main.py
+    # Configure environment
+    cp .env.example .env   # set your API keys; see below
+
+    # Run
+    python terminal/main.py
 ```
 
 ---
@@ -100,11 +104,15 @@ python terminal/main.py
 ## Configure API Keys
 
 Create and edit a `.env` file at the project root with the following variables:
+Create and edit a `.env` file at the project root with the following variables:
 
-```
-GEMINI_API_KEY=...
-GROQ_API_KEY=...
-HUGGINGFACE_TOKEN=...
+    GEMINI_API_KEY=...
+    GROQ_API_KEY=...
+    HUGGINGFACE_TOKEN=...
+    OPENAI_API_KEY=...
+    MCP_API_KEY=...
+
+- Ollama does not require an API key but must be installed and the daemon running.
 OPENAI_API_KEY=...
 MCP_API_KEY=...
 ```
@@ -190,9 +198,13 @@ Troubleshooting:
 ---
 
 ## Packaging for Production
+Example with PyInstaller:
 
-You can ship a single-file binary for operators who don’t want Python on the host.
+    pip install pyinstaller
+    pyinstaller --onefile --name nexusai terminal/main.py
+    # Output will be in the dist/ directory as 'nexusai' (or nexusai.exe on Windows)
 
+Distribute the binary and provide instructions to set environment variables (or bundle an `.env`).
 Example with PyInstaller:
 
 ```bash
@@ -214,29 +226,32 @@ Distribute the binary and provide instructions to set environment variables (or 
   - `pip install -r requirements.txt --no-cache-dir`
 - API key errors:
   - Ensure `.env` exists and keys are valid; try a different provider with `/switch`.
-- Ollama issues:
-  - Make sure the Ollama service is running and models are pulled. Test with `ollama list`.
-- Voice input:
-  - Requires optional `speech_recognition` (and OS-specific audio dependencies). If unavailable, `/voice` will show guidance.
-
----
-
 ## Project Structure
 
-```
-## Project Structure
 
-    NEXUS-AI.io/
-    ├── index.html                # Website homepage
-    ├── app.js                    # Website functionality
-    ├── styles.css                # Website styles
-    ├── CHANGELOG.md              # Version history
-    ├── terminal/                 # Main application (CLI)
-    │   ├── main.py               # Entry point
-    │   ├── requirements.txt      # Dependencies
-    │   ├── install_*.{bat,sh}    # OS installers (root also contains installers)
-    │   └── tests/                # Unit tests
-    ├── advanced_features.py
+    ## Project Structure
+
+        NEXUS-AI.io/
+        ├── index.html                # Website homepage
+        ├── app.js                    # Website functionality
+        ├── styles.css                # Website styles
+        ├── CHANGELOG.md              # Version history
+        ├── terminal/                 # Main application (CLI)
+        │   ├── main.py               # Entry point
+        │   ├── requirements.txt      # Dependencies
+        │   ├── install_*.{bat,sh}    # OS installers (root also contains installers)
+        │   └── tests/                # Unit tests
+        ├── advanced_features.py
+        ├── analytics_monitor.py
+        ├── code_review_assistant.py
+        ├── context_aware_ai.py
+        ├── creative_tools.py
+        ├── games_learning.py
+        ├── advanced_security.py
+        ├── task_manager.py
+        ├── theme_manager.py
+        ├── integration_hub.py
+        └── README.md
     ├── analytics_monitor.py
     ├── code_review_assistant.py
     ├── context_aware_ai.py
