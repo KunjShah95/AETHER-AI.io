@@ -2,9 +2,9 @@ name: Docker Build & Smoke Test
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
   build-and-test:
@@ -15,7 +15,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t aetherai:ci .
+          # Build using the Dockerfile located in the terminal/ directory
+          docker build -t aetherai:ci -f terminal/Dockerfile terminal
 
       - name: Run smoke test (aetherai --help)
         run: |
