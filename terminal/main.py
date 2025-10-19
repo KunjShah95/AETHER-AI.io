@@ -52,8 +52,8 @@ try:
     from advanced_security import AdvancedSecurity
     from task_manager import TaskManager
     from theme_manager import ThemeManager
-    from code_review_assistant import CodeReviewAssistant
     from integration_hub import IntegrationHub
+    from code_review_assistant import CodeReviewAssistant
 except ImportError:
     ContextAwareAI = None
     AnalyticsMonitor = None
@@ -90,9 +90,18 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-# Settings
-CONFIG_PATH = os.path.expanduser("~/.nexus/config.yaml")
-USER_DB_PATH = os.path.expanduser("~/.nexus/users.json")
+# Settings - resolve at runtime to respect test env overrides (HOME) and Windows USERPROFILE
+def _get_home_dir() -> str:
+    # Prefer HOME (for tests), then USERPROFILE (Windows), then expanduser
+    return os.getenv('HOME') or os.getenv('USERPROFILE') or os.path.expanduser('~')
+
+
+def CONFIG_PATH() -> str:
+    return os.path.join(_get_home_dir(), '.nexus', 'config.yaml')
+
+
+def USER_DB_PATH() -> str:
+    return os.path.join(_get_home_dir(), '.nexus', 'users.json')
 MAX_RETRIES = 3
 RATE_LIMIT_DELAY = 1.5
 VERSION = "3.0"
@@ -129,6 +138,18 @@ class SecurityManager:
         self.allowed_file_extensions = ['.txt', '.log', '.md', '.csv']
         self.violation_count = 0
         self.violation_threshold = 5
+
+        # Common prompt-injection phrases to detect when user-supplied content
+        # will be sent to an LLM. These are conservative heuristics.
+        self.prompt_injection_patterns = [
+            r"ignore (previous|all) instructions",
+            r"disregard (previous|earlier) instructions",
+            r"you are now",
+            r"from now on",
+            r"follow these instructions",
+            r"do not follow the",
+            r"respond only with",
+        ]
 
     def sanitize(self, input_str: str) -> str:
         if not isinstance(input_str, str) or len(input_str) > 10000:
@@ -186,12 +207,51 @@ class SecurityManager:
             logging.critical("Repeated security violations detected!")
             # Optionally, trigger alert/lockout here
 
+    def detect_prompt_injection(self, s: str) -> bool:
+        """Basic heuristic detection for prompt-injection phrases."""
+        try:
+            if not isinstance(s, str):
+                return False
+            sl = s.lower()
+            for p in self.prompt_injection_patterns:
+                try:
+                    if re.search(p, sl):
+                        logging.warning(f"Prompt injection pattern detected: {p}")
+                        return True
+                except re.error:
+                    continue
+        except Exception:
+            pass
+        return False
+
     def validate_url(self, url: str) -> bool:
         # Only allow http(s) and block local addresses
         if not url.startswith(('http://', 'https://')):
             return False
         if re.search(r'(localhost|127\\.0\\.1|0\\.0\\.0\\.0|::1)', url):
             return False
+        return True
+
+# --- AI Manager ---
+class RateLimiter:
+    """Simple in-memory rate limiter per user.
+
+    Window-based counter: allows `limit` requests per `window_seconds`.
+    """
+    def __init__(self, limit: int = 10, window_seconds: int = 60):
+        self.limit = limit
+        self.window_seconds = window_seconds
+        self._stores = {}
+
+    def allow(self, user_id: str) -> bool:
+        now = time.time()
+        wins = self._stores.setdefault(user_id, [])
+        # Remove timestamps outside of the sliding window
+        while wins and wins[0] <= now - self.window_seconds:
+            wins.pop(0)
+        if len(wins) >= self.limit:
+            return False
+        wins.append(now)
         return True
 
 # --- AI Manager ---
@@ -441,16 +501,25 @@ class UserManager:
         self._start_timeout_thread()
 
     def _load_users(self):
-        if os.path.exists(USER_DB_PATH):
-            with open(USER_DB_PATH, 'r') as f:
-                return json.load(f)
+        path = USER_DB_PATH()
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                try:
+                    return json.load(f)
+                except Exception:
+                    return {}
         return {}
 
     def _save_users(self):
-        os.makedirs(os.path.dirname(USER_DB_PATH), exist_ok=True)
-        with open(USER_DB_PATH, 'w') as f:
+        path = USER_DB_PATH()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w') as f:
             json.dump(self.user_db, f)
-        os.chmod(USER_DB_PATH, 0o600)
+        try:
+            os.chmod(path, 0o600)
+        except Exception:
+            # On Windows, os.chmod with those modes may fail; ignore
+            pass
 
     def hash_password(self, password) -> str:
         """Hash a password using bcrypt (via passlib). If passlib isn't available,
@@ -459,11 +528,42 @@ class UserManager:
         """
         try:
             from passlib.hash import bcrypt
+            try:
+                # Use passlib bcrypt to create a salted hash
+                return bcrypt.hash(password)
+            except Exception as e:
+                # If bcrypt backend fails at runtime (some systems have broken bcrypt),
+                # fall back to SHA256 but log the error for diagnostics.
+                logging.warning(f"bcrypt hashing failed, falling back to SHA256: {e}")
+                return hashlib.sha256(password.encode()).hexdigest()
         except Exception:
             logging.warning("passlib not available; falling back to SHA256 (insecure)")
             return hashlib.sha256(password.encode()).hexdigest()
 
-        return bcrypt.hash(password)
+    def _verify_password(self, password: str, stored_hash: str) -> bool:
+        """Verify a plaintext password against a stored hash.
+
+        Supports passlib bcrypt hashes and legacy SHA256 hex digests.
+        """
+        if not stored_hash or not isinstance(stored_hash, str):
+            return False
+        # Try passlib bcrypt verification first
+        try:
+            from passlib.hash import bcrypt
+            try:
+                return bcrypt.verify(password, stored_hash)
+            except Exception:
+                # If verification fails due to backend issues, fall through to sha256 check
+                pass
+        except Exception:
+            # passlib not available; fall back to SHA256
+            pass
+
+        # Legacy SHA256 hex digest
+        try:
+            return stored_hash == hashlib.sha256(password.encode()).hexdigest()
+        except Exception:
+            return False
 
     def signup(self, username, password, is_admin=False):
         if username in self.user_db:
@@ -479,24 +579,34 @@ class UserManager:
 
     def login(self, username, password):
         user = self.user_db.get(username)
-        if not user or user["password"] != self.hash_password(password):
-            # Try legacy SHA256 validation if passlib bcrypt is used in storage
-            stored = user["password"] if user else None
-            if stored and isinstance(stored, str) and len(stored) == 64:
-                # Legacy sha256 hex digest
-                if stored == hashlib.sha256(password.encode()).hexdigest():
-                    # Re-hash with bcrypt and store
-                    try:
+        if not user:
+            return False, "Invalid username or password."
+
+        stored = user.get("password")
+
+        # Verify password against stored hash (supports bcrypt via passlib and legacy sha256)
+        try:
+            if self._verify_password(password, stored):
+                # If stored was a legacy SHA256 and passlib is available, migrate to bcrypt
+                try:
+                    # Detect legacy sha256 by length (64 hex chars)
+                    if isinstance(stored, str) and len(stored) == 64:
+                        # Attempt to re-hash using hash_password (which will prefer bcrypt)
                         new_hash = self.hash_password(password)
                         self.user_db[username]["password"] = new_hash
                         self._save_users()
-                    except Exception:
-                        pass
-                    self.current_user = username
-                    return True, f"Welcome, {username}! (password migrated)"
-            return False, "Invalid username or password."
-        self.current_user = username
-        return True, f"Welcome, {username}!"
+                        return True, f"Welcome, {username}! (password migrated)"
+                except Exception:
+                    # If migration fails, continue to login normally
+                    pass
+
+                self.current_user = username
+                return True, f"Welcome, {username}!"
+        except Exception:
+            # Fall through to invalid login
+            pass
+
+        return False, "Invalid username or password."
 
     def set_api_key(self, provider, key):
         if not self.current_user:
@@ -598,13 +708,24 @@ class NexusAI:
         # Update console theme if theme manager is available
         if self.theme_manager:
             update_console_theme(self.theme_manager)
-        
+
+        # Descriptions for models (used by /models and /current-model handlers)
+        self.model_descriptions = {
+            "gemini": "Google's Gemini 2.0 Flash (Fixed API)",
+            "groq": "Groq Cloud - Mixtral 8x7B",
+            "ollama": "Local Ollama Models (Most Secure)",
+            "huggingface": "HuggingFace Inference API",
+            "chatgpt": "OpenAI's ChatGPT (API)",
+            "mcp": "Model Context Protocol (API)"
+        }
+
         self.show_banner()
     
     def _load_config(self) -> str:
         try:
-            if os.path.exists(CONFIG_PATH):
-                with open(CONFIG_PATH) as f:
+            cfg = CONFIG_PATH()
+            if os.path.exists(cfg):
+                with open(cfg) as f:
                     config = yaml.safe_load(f)
                     if isinstance(config, dict):
                         model = config.get("default_model", "gemini")
@@ -616,25 +737,29 @@ class NexusAI:
     
     def _save_config(self):
         try:
-            os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
-            with open(CONFIG_PATH, "w") as f:
+            cfg = CONFIG_PATH()
+            os.makedirs(os.path.dirname(cfg), exist_ok=True)
+            with open(cfg, "w") as f:
                 yaml.dump({"default_model": self.current_model}, f)
             # Restrict config file permissions (owner read/write only)
-            os.chmod(CONFIG_PATH, 0o600)
+            try:
+                os.chmod(cfg, 0o600)
+            except Exception:
+                pass
         except Exception as e:
             logging.error(f"Config save error: {str(e)}")
     
     def show_banner(self):
-        # Cool ASCII Banner
+        # Cool ASCII Banner (AetherAI)
         banner_text = Text()
         banner_text.append("\n")
-        banner_text.append("███   ██╗███████╗██╗  ██╗██╗   ██╗███████╗\n", style="bold cyan")
-        banner_text.append("████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝\n", style="bold cyan")
-        banner_text.append("██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗\n", style="bold blue")
-        banner_text.append("██║╚██╗██║██╔══╝   ██╔██╗ ██║   ██║╚════██║\n", style="bold blue")
-        banner_text.append("██║ ╚████║███████╗██╔╝ ██╗╚██████╔╝███████║\n", style="bold magenta")
-        banner_text.append("╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝\n", style="bold magenta")
-        banner_text.append(f"\n🤖 AI TERMINAL ASSISTANT v{VERSION}\n", style="bold green")
+        banner_text.append("  ___   ______  _______  _______  _____    _____   _____ \n", style="bold cyan")
+        banner_text.append("     AAA   EEEEE  TTTTT  HHHH   EEEEE  RRRR   AAA   IIIII\n", style="bold yellow")
+        banner_text.append("    AAAAA  E      T     H   H  E      R   R AAAAA   I   \n", style="bold yellow")
+        banner_text.append("   A     A EEE    T     HHHHH  EEE    RRRR A     A  I   \n", style="bold yellow")
+        banner_text.append("   AAAAAAA E      T     H   H  E      R  R AAAAAAA  I   \n", style="bold yellow")
+        banner_text.append("   A     A EEEEE  T     H   H  EEEEE  R   R A     A IIIII\n", style="bold yellow")
+        banner_text.append(f"\n🤖 AetherAI Terminal v{VERSION}\n", style="bold green")
         banner_text.append("⚡ Multi-Model • 🔒 Secure • 🚀 Enhanced\n", style="bold yellow")
         
         console.print(Panel(banner_text, border_style="bright_blue", padding=(1, 2)))
@@ -1298,7 +1423,7 @@ class NexusAI:
             if cmd == "help":
                 try:
                     help_text = Text()
-                    help_text.append(f"\n🚀 NEXUS AI TERMINAL v{VERSION} - COMMAND REFERENCE\n\n", style="bold cyan")
+                    help_text.append(f"\n🚀 AetherAI Terminal v{VERSION} - COMMAND REFERENCE\n\n", style="bold cyan")
                     help_text.append("📋 BASIC COMMANDS:\n", style="bold yellow")
                     help_text.append("/help          - Show this help menu\n", style="white")
                     help_text.append("/status        - Show detailed service status\n", style="white")
@@ -1517,6 +1642,349 @@ class NexusAI:
                     return f"✅ Switched to {new_model.upper()}"
                 
                 return f"❌ Invalid model. Choose from: {', '.join(valid_models)}\n   For Ollama: /switch ollama [model_name]"
+
+            # --- Core Utility Commands ---
+            if cmd == "status":
+                try:
+                    rows = []
+                    for service, status in self.ai.status.items():
+                        desc = self.model_descriptions.get(service, "AI Service")
+                        rows.append(f"{service.upper():<10} | {status:<20} | {desc}")
+                    return "\n".join(["Service     | Status               | Description", "-"*60] + rows)
+                except Exception as e:
+                    return f"❌ Failed to gather status: {str(e)[:100]}"
+
+            if cmd == "security":
+                try:
+                    details = [
+                        "🔒 Security Info:",
+                        f"Allowed commands: {', '.join(self.allowed_commands)}",
+                        f"Config path: {CONFIG_PATH()}",
+                        f"User DB path: {USER_DB_PATH()}"
+                    ]
+                    return "\n".join(details)
+                except Exception as e:
+                    return f"❌ Failed to fetch security info: {str(e)[:100]}"
+
+            if cmd == "clear":
+                try:
+                    console.clear()
+                    return ""
+                except Exception:
+                    return "\n" * 50
+
+            if cmd == "exit":
+                try:
+                    return "👋 Exiting..."
+                finally:
+                    try:
+                        sys.exit(0)
+                    except SystemExit:
+                        pass
+
+            if cmd == "models":
+                try:
+                    lines = ["Available AI models:"]
+                    for k, v in self.ai.status.items():
+                        desc = self.model_descriptions.get(k, "AI Service")
+                        lines.append(f"• {k.upper():<10} - {v} - {desc}")
+                    lines.append("\nUse /switch [model] to change, e.g., /switch groq")
+                    lines.append("For Ollama, you can target a specific model: /switch ollama llama3")
+                    lines.append("Use /ollama-models to list local models")
+                    return "\n".join(lines)
+                except Exception as e:
+                    return f"❌ Failed to list models: {str(e)[:100]}"
+
+            if cmd == "ollama-models":
+                try:
+                    # Support detailed specs: /ollama-models [model_name]
+                    parts = command.split(maxsplit=1)
+                    try:
+                        models = ollama.list().get("models", [])
+                    except Exception as e:
+                        return f"❌ Ollama not available: {str(e)[:100]}"
+
+                    if not models:
+                        return "❌ No Ollama models found. Ensure Ollama is running and models are pulled."
+
+                    def _fmt_size(sz: int) -> str:
+                        try:
+                            if sz >= 1024**3:
+                                return f"{sz/(1024**3):.2f} GB"
+                            if sz >= 1024**2:
+                                return f"{sz/(1024**2):.2f} MB"
+                            if sz >= 1024:
+                                return f"{sz/1024:.2f} KB"
+                            return f"{sz} B"
+                        except Exception:
+                            return str(sz)
+
+                    # Detailed single-model view
+                    if len(parts) == 2 and parts[1].strip():
+                        target = parts[1].strip()
+                        # Find the matching model entry (for size/modified)
+                        meta = next((m for m in models if m.get("name") == target), None)
+                        try:
+                            info = ollama.show(target)
+                        except Exception as e:
+                            return f"❌ Could not fetch specs for '{target}': {str(e)[:100]}"
+
+                        details = info.get("details", {}) or {}
+                        size_str = _fmt_size(meta.get("size", 0)) if meta else "Unknown"
+                        modified = (meta or {}).get("modified_at", "Unknown")
+
+                        lines = [
+                            f"🦙 Ollama Model Details: {target}",
+                            f"Size: {size_str}",
+                            f"Modified: {modified}",
+                            f"Digest: {info.get('digest', info.get('model', 'Unknown'))}",
+                            f"Family: {details.get('family') or (details.get('families') or ['Unknown'])[0] if isinstance(details.get('families'), list) else details.get('family', 'Unknown')}",
+                            f"Format: {details.get('format', 'Unknown')}",
+                            f"Parameters: {details.get('parameter_size', 'Unknown')}",
+                            f"Quantization: {details.get('quantization_level', 'Unknown')}",
+                        ]
+                        if info.get('license'):
+                            lines.append(f"License: {str(info.get('license'))[:200]}")
+                        if info.get('parameters'):
+                            lines.append(f"Params string: {str(info.get('parameters'))[:200]}")
+                        return "\n".join(lines)
+
+                    # Summary table view
+                    header = f"{'NAME':<36}  {'SIZE':>10}  {'PARAMS':>8}  {'FAMILY':<12}  {'QUANT':<8}  MODIFIED"
+                    sep = "-" * len(header)
+                    rows = ["🦙 Installed Ollama Models:", header, sep]
+                    for m in models:
+                        name = m.get("name", "unknown")
+                        size = _fmt_size(m.get("size", 0))
+                        modified = m.get("modified_at", "") or ""
+                        # Try to enrich with details via ollama.show (best-effort)
+                        params = family = quant = "?"
+                        try:
+                            info = ollama.show(name)
+                            d = (info or {}).get('details', {}) or {}
+                            params = d.get('parameter_size', params) or params
+                            family = d.get('family', family) or (d.get('families', [family])[0] if isinstance(d.get('families'), list) and d.get('families') else family)
+                            quant = d.get('quantization_level', quant) or quant
+                        except Exception:
+                            pass
+                        rows.append(f"{name:<36}  {size:>10}  {params:>8}  {family:<12}  {quant:<8}  {modified}")
+                    rows.append("\n💡 Use '/ollama-models [model_name]' to see full specs for a single model")
+                    rows.append("💡 Use '/switch ollama [model_name]' to select a model")
+                    return "\n".join(rows)
+                except Exception as e:
+                    return f"❌ Failed to fetch Ollama models: {str(e)[:100]}"
+
+            if cmd == "current-model":
+                try:
+                    model = self.current_model
+                    base = model.split(":", 1)[0]
+                    desc = self.model_descriptions.get(base, "AI Service")
+                    return f"🎯 Current model: {model.upper()}\n{desc}"
+                except Exception as e:
+                    return f"❌ Failed to read current model: {str(e)[:100]}"
+
+            if cmd == "config":
+                try:
+                    cfg = CONFIG_PATH()
+                    content = ""
+                    if os.path.exists(cfg):
+                        with open(cfg, "r", errors="ignore") as f:
+                            content = f.read(800)
+                    return f"⚙️ Config file: {cfg}\nDefault model: {self.current_model}\n\n{content}"
+                except Exception as e:
+                    return f"❌ Failed to read config: {str(e)[:100]}"
+
+            if cmd == "sysinfo":
+                try:
+                    info = []
+                    try:
+                        import platform
+                        info.extend([
+                            f"OS: {platform.system()} {platform.release()} ({platform.version()})",
+                            f"Machine: {platform.machine()}"
+                        ])
+                    except Exception:
+                        pass
+                    try:
+                        import psutil
+                        vm = psutil.virtual_memory()
+                        cpu = psutil.cpu_percent(interval=0.3)
+                        info.extend([
+                            f"CPU: {cpu}%",
+                            f"Memory: {round(vm.used/1e9,2)}/{round(vm.total/1e9,2)} GB ({vm.percent}%)",
+                        ])
+                        du = psutil.disk_usage('/')
+                        info.append(f"Disk: {round(du.used/1e9,2)}/{round(du.total/1e9,2)} GB ({du.percent}%)")
+                    except Exception:
+                        pass
+                    return "\n".join(["🖥️ System Info:"] + info) or "No system info available"
+                except Exception as e:
+                    return f"❌ Failed to get sysinfo: {str(e)[:100]}"
+
+            if cmd.startswith("run "):
+                parts = cmd.split(maxsplit=1)
+                if len(parts) != 2:
+                    return "Usage: /run [command]"
+                return self.execute_command(parts[1])
+
+            if cmd.startswith("calc "):
+                try:
+                    expr = command.split(" ", 1)[1]
+                    import math
+                    allowed = {k: getattr(math, k) for k in dir(math) if not k.startswith("_")}
+                    allowed.update({})
+                    # Very restricted eval
+                    value = eval(expr, {"__builtins__": {}}, allowed)
+                    return f"🧮 {expr} = {value}"
+                except Exception as e:
+                    return f"❌ Calculation error: {str(e)[:100]}"
+
+            if cmd == "explore":
+                try:
+                    root = os.getcwd()
+                    entries = []
+                    for i, name in enumerate(sorted(os.listdir(root))[:100], 1):
+                        path = os.path.join(root, name)
+                        tag = "DIR" if os.path.isdir(path) else "FILE"
+                        entries.append(f"{i:>2}. [{tag}] {name}")
+                    return "\n".join([f"📁 {root}"] + entries)
+                except Exception as e:
+                    return f"❌ Explore failed: {str(e)[:100]}"
+
+            if cmd.startswith("weather "):
+                try:
+                    city = command.split(" ", 1)[1].strip()
+                    if not city:
+                        return "Usage: /weather [city]"
+                    url = f"https://wttr.in/{city}?format=j1"
+                    resp = self.ai.session.get(url, timeout=10)
+                    if resp.status_code != 200:
+                        return f"❌ Weather error: {resp.status_code}"
+                    data = resp.json()
+                    cur = data.get("current_condition", [{}])[0]
+                    tempC = cur.get("temp_C", "?")
+                    desc = cur.get("weatherDesc", [{}])[0].get("value", "")
+                    humid = cur.get("humidity", "?")
+                    return f"🌤️ {city}: {tempC}°C, {desc}, humidity {humid}%"
+                except Exception as e:
+                    return f"❌ Weather failed: {str(e)[:100]}"
+
+            if cmd.startswith("note "):
+                try:
+                    note = command.split(" ", 1)[1]
+                    notes_path = os.path.join(_get_home_dir(), '.nexus', 'notes.txt')
+                    os.makedirs(os.path.dirname(notes_path), exist_ok=True)
+                    with open(notes_path, 'a', encoding='utf-8') as f:
+                        f.write(note + "\n")
+                    return "📝 Note saved."
+                except Exception as e:
+                    return f"❌ Failed to save note: {str(e)[:100]}"
+
+            if cmd == "notes":
+                try:
+                    notes_path = os.path.join(_get_home_dir(), '.nexus', 'notes.txt')
+                    if not os.path.exists(notes_path):
+                        return "No notes saved yet."
+                    with open(notes_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read().strip()
+                    return content or "No notes saved yet."
+                except Exception as e:
+                    return f"❌ Failed to read notes: {str(e)[:100]}"
+
+            if cmd.startswith("timer "):
+                try:
+                    parts = command.split()
+                    if len(parts) != 2 or not parts[1].isdigit():
+                        return "Usage: /timer [seconds]"
+                    secs = int(parts[1])
+                    def _timer_thread(s):
+                        try:
+                            time.sleep(s)
+                            console.print(f"⏰ Timer done: {s} seconds elapsed")
+                        except Exception:
+                            pass
+                    threading.Thread(target=_timer_thread, args=(secs,), daemon=True).start()
+                    return f"⏳ Timer started for {secs} seconds"
+                except Exception as e:
+                    return f"❌ Failed to start timer: {str(e)[:100]}"
+
+            if cmd.startswith("convert "):
+                try:
+                    parts = command.split()
+                    if len(parts) != 4:
+                        return "Usage: /convert [val] [from] [to]"
+                    val = float(parts[1])
+                    src = parts[2].lower()
+                    dst = parts[3].lower()
+                    # Temperature
+                    if src in ["c", "f", "k"] and dst in ["c", "f", "k"]:
+                        c = val
+                        if src == "f":
+                            c = (val - 32) * 5/9
+                        elif src == "k":
+                            c = val - 273.15
+                        out = c
+                        if dst == "f":
+                            out = c * 9/5 + 32
+                        elif dst == "k":
+                            out = c + 273.15
+                        else:
+                            out = c
+                        return f"🌡️ {val}{src.upper()} = {round(out, 3)}{dst.upper()}"
+                    # Weight
+                    if src in ["kg", "lb"] and dst in ["kg", "lb"]:
+                        kg = val if src == "kg" else val * 0.45359237
+                        out = kg if dst == "kg" else kg / 0.45359237
+                        return f"⚖️ {val}{src} = {round(out, 3)}{dst}"
+                    # Data
+                    if src in ["kb", "mb", "gb"] and dst in ["kb", "mb", "gb"]:
+                        factor = {"kb": 1, "mb": 1024, "gb": 1024*1024}
+                        kb = val * factor[src]
+                        out = kb / factor[dst]
+                        return f"💾 {val}{src.upper()} = {round(out, 3)}{dst.upper()}"
+                    return "❌ Unsupported conversion"
+                except Exception as e:
+                    return f"❌ Conversion error: {str(e)[:100]}"
+
+            if cmd == "joke":
+                try:
+                    import random
+                    jokes = [
+                        "Why do programmers prefer dark mode? Because light attracts bugs.",
+                        "There are only 10 kinds of people in the world: those who understand binary and those who don’t.",
+                        "A SQL query walks into a bar, walks up to two tables and asks: 'Can I join you?'",
+                    ]
+                    return random.choice(jokes)
+                except Exception as e:
+                    return f"❌ Joke error: {str(e)[:100]}"
+
+            if cmd.startswith("password"):
+                try:
+                    import secrets, string
+                    parts = command.split()
+                    length = 16
+                    if len(parts) == 2 and parts[1].isdigit():
+                        length = max(8, min(128, int(parts[1])))
+                    alphabet = string.ascii_letters + string.digits + string.punctuation
+                    pwd = ''.join(secrets.choice(alphabet) for _ in range(length))
+                    return pwd
+                except Exception as e:
+                    return f"❌ Password generation failed: {str(e)[:100]}"
+
+            if cmd == "tip":
+                try:
+                    import random
+                    tips = [
+                        "Use meaningful commit messages.",
+                        "Write tests before refactoring.",
+                        "Keep functions small and focused.",
+                        "Prefer composition over inheritance.",
+                        "Automate repetitive tasks.",
+                    ]
+                    return random.choice(tips)
+                except Exception as e:
+                    return f"❌ Tip error: {str(e)[:100]}"
+
             # --- Web Search ---
             if cmd.startswith("websearch"):
                 parts = command.split(maxsplit=1)
@@ -2443,6 +2911,78 @@ class NexusAI:
                     output += f"Matches: {len(threat['matches'])}\n\n"
                 return output
 
+            # --- System Commands ---
+            if cmd == "models":
+                """List all available AI models"""
+                output = "🤖 Available AI Models:\n\n"
+                for model, description in self.model_descriptions.items():
+                    status = self.ai.status.get(model, "Unknown")
+                    status_icon = "✅" if "✅" in status else "❌" if "❌" in status else "⚪"
+                    output += f"{status_icon} {model.upper()}: {description}\n"
+                    output += f"   Status: {status}\n\n"
+                output += "💡 Use '/switch [model]' to change models\n"
+                output += "💡 Use '/ollama-models' for detailed Ollama model list"
+                return output
+
+            if cmd == "ollama-models":
+                """Show detailed list of available Ollama models"""
+                if not self.ai._check_ollama():
+                    return "❌ Ollama is not running or not installed.\n   Please start Ollama first."
+                
+                try:
+                    models_data = ollama.list()["models"]
+                    if not models_data:
+                        return "❌ No Ollama models found.\n   Use 'ollama pull [model]' to download models."
+                    
+                    output = "🦙 Available Ollama Models:\n\n"
+                    for model in models_data:
+                        name = model.get("name", "Unknown")
+                        size = model.get("size", 0)
+                        modified = model.get("modified_at", "Unknown")
+                        
+                        # Format size
+                        if size > 1024**3:  # GB
+                            size_str = f"{size / (1024**3):.1f} GB"
+                        elif size > 1024**2:  # MB
+                            size_str = f"{size / (1024**2):.1f} MB"
+                        else:
+                            size_str = f"{size} bytes"
+                        
+                        # Format date
+                        if modified != "Unknown":
+                            try:
+                                from datetime import datetime
+                                date_obj = datetime.fromisoformat(modified.replace('Z', '+00:00'))
+                                date_str = date_obj.strftime("%Y-%m-%d %H:%M")
+                            except:
+                                date_str = modified[:10]
+                        else:
+                            date_str = "Unknown"
+                        
+                        output += f"📦 {name}\n"
+                        output += f"   Size: {size_str}\n"
+                        output += f"   Modified: {date_str}\n\n"
+                    
+                    output += f"💡 Use '/switch ollama [model_name]' to switch to a specific model\n"
+                    output += f"💡 Example: /switch ollama {models_data[0]['name']}"
+                    return output
+                    
+                except Exception as e:
+                    return f"❌ Error fetching Ollama models: {str(e)}\n   Make sure Ollama is running"
+
+            if cmd == "current-model":
+                """Show currently active AI model"""
+                current = self.current_model or "None"
+                status = self.ai.status.get(current.split(':')[0] if ':' in current else current, "Unknown")
+                output = f"🤖 Current AI Model: {current.upper()}\n"
+                output += f"📊 Status: {status}\n"
+                if current.startswith("ollama:"):
+                    model_name = current.split(":", 1)[1]
+                    output += f"🦙 Ollama Model: {model_name}\n"
+                description = self.model_descriptions.get(current.split(':')[0] if ':' in current else current, "No description available")
+                output += f"📝 Description: {description}\n"
+                return output
+
             if cmd == "run":
                 return "Usage: /run [command] - Execute system commands like 'ls', 'pwd', 'whoami', etc."
 
@@ -2461,24 +3001,25 @@ class NexusAI:
             return "❌ Command processing error"
 
 # --- Main Loop ---
-if __name__ == "__main__":
+def main() -> int:
+    """Start the interactive AetherAI terminal. Returns exit code."""
     try:
-        console.print("[bold green]🚀 Starting Nexus AI Terminal...[/bold green]")
+        console.print("[bold green]🚀 Starting AetherAI Terminal...[/bold green]")
         ai = NexusAI()
-        
+
         while True:
             try:
                 model_display = ai.current_model.upper() if ai.current_model else "UNKNOWN"
                 prompt = input(f"\n[{model_display}] 🚀 > ").strip()
-                
+
                 if prompt.lower() in ["exit", "/exit", "quit", "/quit"]:
-                    console.print("\n[bold green]👋 Thanks for using Nexus AI Terminal![/bold green]")
+                    console.print("\n[bold green]👋 Thanks for using AetherAI Terminal![/bold green]")
                     console.print("[bold cyan]🚀 Keep innovating![/bold cyan]\n")
-                    break
-                
+                    return 0
+
                 if not prompt:
                     continue
-                
+
                 # Show thinking indicator for AI responses
                 if not prompt.startswith("/"):
                     with Progress(
@@ -2490,34 +3031,29 @@ if __name__ == "__main__":
                         response = ai.process_input(prompt)
                 else:
                     response = ai.process_input(prompt)
-                
+
                 # Ensure response is always a string
                 if response is None:
                     response = "❌ Error: Command returned no response"
-                
+
                 if response and isinstance(response, str) and response.strip():
                     console.print(f"\n[bold cyan]🤖 AI:[/bold cyan] {response}")
                 elif response:
                     console.print(f"\n[bold cyan]🤖 AI:[/bold cyan] {response}")
-                
+
             except KeyboardInterrupt:
                 console.print("\n[yellow]💡 Use '/exit' to quit gracefully[/yellow]")
-                
+            except Exception as e:
+                logging.error(f"Loop error: {str(e)}")
+                console.print(f"[bold red]Error in loop: {str(e)}[/bold red]")
+
     except Exception as e:
         logging.critical(f"Fatal error: {str(e)}")
         console.print(f"[bold red]💥 Critical error:[/bold red] {str(e)}")
         console.print("[yellow]Check ai_assistant.log for details[/yellow]")
-        sys.exit(1)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
     
-    # Example: Using Gemini 2.5 Flash with google-generativeai
-    import google.generativeai as genai
-    import os
-    
-    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        print("No Gemini API key found in environment variables.")
-    else:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash")
-        response = model.generate_content("Explain how AI works in a few words")
-        print(response.text)

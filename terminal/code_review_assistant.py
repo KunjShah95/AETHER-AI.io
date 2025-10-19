@@ -41,16 +41,12 @@ class CodeReviewAssistant:
             'markdown': ['.md', '.markdown']
         }
 
-        self.quality_metrics = {
-            'complexity': self._analyze_complexity,
-            'maintainability': self._analyze_maintainability,
-            'security': self._analyze_security,
-            'performance': self._analyze_performance,
-            'best_practices': self._analyze_best_practices
-        }
+        # Quality metrics will be initialized after methods are defined
+        self.quality_metrics = {}
 
         self.review_history = []
         self.load_review_history()
+        self._initialize_quality_metrics()
 
     def load_review_history(self):
         """Load review history from file"""
@@ -614,3 +610,181 @@ class CodeReviewAssistant:
             return 0.0
 
         return round(len(intersection) / len(union) * 100, 2)
+
+    def _analyze_complexity(self, code: str, language: str) -> Dict:
+        """Analyze code complexity"""
+        metrics = {}
+        lines = code.splitlines()
+        
+        # Basic complexity metrics
+        metrics["cyclomatic_complexity"] = self._calculate_cyclomatic_complexity(code, language)
+        metrics["nesting_depth"] = self._calculate_nesting_depth(code)
+        metrics["function_complexity"] = self._calculate_function_complexity(code, language)
+        
+        return metrics
+
+    def _analyze_maintainability(self, code: str, language: str) -> Dict:
+        """Analyze code maintainability"""
+        metrics = {}
+        lines = code.splitlines()
+        
+        # Maintainability metrics
+        metrics["code_duplication"] = self._detect_code_duplication(code)
+        metrics["naming_consistency"] = self._check_naming_consistency(code, language)
+        metrics["comment_ratio"] = self._calculate_comment_ratio(code)
+        
+        return metrics
+
+    def _analyze_security_metrics(self, code: str, language: str) -> Dict:
+        """Analyze security metrics"""
+        security_issues = self._run_security_analysis(code, language)
+        return {
+            "security_score": max(0, 100 - len(security_issues) * 10),
+            "issues_count": len(security_issues),
+            "high_severity_count": len([i for i in security_issues if i.get("severity") == "high"])
+        }
+
+    def _analyze_performance_metrics(self, code: str, language: str) -> Dict:
+        """Analyze performance metrics"""
+        suggestions = self._run_performance_analysis(code, language)
+        return {
+            "performance_score": max(0, 100 - len(suggestions) * 5),
+            "suggestions_count": len(suggestions)
+        }
+
+    def _analyze_best_practices_metrics(self, code: str, language: str) -> Dict:
+        """Analyze best practices metrics"""
+        suggestions = self._run_best_practices_analysis(code, language)
+        return {
+            "best_practices_score": max(0, 100 - len(suggestions) * 3),
+            "violations_count": len(suggestions)
+        }
+
+    def _calculate_cyclomatic_complexity(self, code: str, language: str) -> int:
+        """Calculate cyclomatic complexity"""
+        complexity = 1  # Base complexity
+        
+        # Count decision points
+        decision_keywords = {
+            'python': ['if', 'elif', 'while', 'for', 'except', 'and', 'or'],
+            'javascript': ['if', 'else if', 'while', 'for', 'catch', '&&', '||', 'case'],
+            'java': ['if', 'else if', 'while', 'for', 'catch', '&&', '||', 'case'],
+            'cpp': ['if', 'else if', 'while', 'for', 'catch', '&&', '||', 'case']
+        }
+        
+        keywords = decision_keywords.get(language, decision_keywords['python'])
+        
+        for keyword in keywords:
+            complexity += len(re.findall(rf'\b{keyword}\b', code, re.IGNORECASE))
+        
+        return min(complexity, 50)  # Cap at 50 for sanity
+
+    def _calculate_nesting_depth(self, code: str) -> int:
+        """Calculate maximum nesting depth"""
+        lines = code.splitlines()
+        max_depth = 0
+        current_depth = 0
+        
+        for line in lines:
+            stripped = line.strip()
+            if not stripped or stripped.startswith('#'):
+                continue
+                
+            # Count indentation
+            indent = len(line) - len(line.lstrip())
+            current_depth = indent // 4  # Assuming 4-space indentation
+            max_depth = max(max_depth, current_depth)
+        
+        return max_depth
+
+    def _calculate_function_complexity(self, code: str, language: str) -> float:
+        """Calculate average function complexity"""
+        if language == 'python':
+            try:
+                tree = ast.parse(code)
+                functions = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
+                if not functions:
+                    return 0.0
+                
+                total_complexity = 0
+                for func in functions:
+                    func_code = ast.get_source_segment(code, func) or ""
+                    total_complexity += self._calculate_cyclomatic_complexity(func_code, language)
+                
+                return round(total_complexity / len(functions), 2)
+            except:
+                pass
+        
+        # Fallback: estimate based on function count
+        func_count = len(re.findall(r'def\s+\w+|function\s+\w+', code))
+        if func_count == 0:
+            return 0.0
+        
+        total_complexity = self._calculate_cyclomatic_complexity(code, language)
+        return round(total_complexity / func_count, 2)
+
+    def _detect_code_duplication(self, code: str) -> float:
+        """Detect code duplication percentage"""
+        lines = [line.strip() for line in code.splitlines() if line.strip()]
+        if len(lines) < 10:
+            return 0.0
+        
+        # Simple duplicate line detection
+        line_counts = {}
+        for line in lines:
+            if len(line) > 10:  # Only consider substantial lines
+                line_counts[line] = line_counts.get(line, 0) + 1
+        
+        duplicate_lines = sum(count - 1 for count in line_counts.values() if count > 1)
+        return round((duplicate_lines / len(lines)) * 100, 2)
+
+    def _check_naming_consistency(self, code: str, language: str) -> float:
+        """Check naming consistency score"""
+        # This is a simplified check
+        if language == 'python':
+            # Check for snake_case functions and variables
+            snake_case_pattern = r'\b[a-z][a-z0-9_]*\b'
+            camel_case_pattern = r'\b[a-z][a-zA-Z0-9]*\b'
+            
+            snake_matches = len(re.findall(snake_case_pattern, code))
+            camel_matches = len(re.findall(camel_case_pattern, code))
+            
+            total_matches = snake_matches + camel_matches
+            if total_matches == 0:
+                return 100.0
+            
+            # Python prefers snake_case
+            consistency = (snake_matches / total_matches) * 100
+            return round(consistency, 2)
+        
+        return 85.0  # Default good score for other languages
+
+    def _calculate_comment_ratio(self, code: str) -> float:
+        """Calculate comment to code ratio"""
+        lines = code.splitlines()
+        comment_lines = 0
+        code_lines = 0
+        
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            elif stripped.startswith('#') or stripped.startswith('//') or stripped.startswith('/*'):
+                comment_lines += 1
+            else:
+                code_lines += 1
+        
+        if code_lines == 0:
+            return 0.0
+        
+        return round((comment_lines / code_lines) * 100, 2)
+
+    def _initialize_quality_metrics(self):
+        """Initialize quality metrics dictionary after methods are defined"""
+        self.quality_metrics = {
+            'complexity': self._analyze_complexity,
+            'maintainability': self._analyze_maintainability,
+            'security': self._analyze_security_metrics,
+            'performance': self._analyze_performance_metrics,
+            'best_practices': self._analyze_best_practices_metrics
+        }

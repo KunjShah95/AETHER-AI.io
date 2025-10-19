@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aetherai"
+version = "0.1.0"
+description = "AetherAI - Interactive terminal assistant"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [ { name = "Nexus Maintainers" } ]
+license = { file = "LICENSE" }
+
+dependencies = [
+    "requests",
+    "PyYAML",
+    "rich",
+    "python-dotenv",
+]
+
+[project.scripts]
+aetherai = "aetherai:main"

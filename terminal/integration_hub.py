@@ -15,6 +15,7 @@ import hmac
 import base64
 from urllib.parse import urlencode, quote
 import subprocess
+import re
 
 class IntegrationHub:
     """Central hub for managing external service integrations"""
@@ -476,18 +477,51 @@ class IntegrationHub:
 
     def setup_webhook(self, service_name: str, webhook_url: str, events: List[str]) -> str:
         """Setup webhook for a service"""
+        """Register a webhook for a given service with validation."""
         if service_name not in self.services:
             return f"❌ Service '{service_name}' not configured"
+
+        # Basic validations: url must be a string and events must be a list
+        if not isinstance(webhook_url, str) or not isinstance(events, list):
+            raise ValueError("Invalid webhook url or events list")
+
+        # Prevent local network addresses or file:/// curls (simple guard)
+        if re.match(r"^(?:http|https)://(?:127\.|localhost|10\.|192\.168\.)", webhook_url, re.IGNORECASE):
+            raise ValueError("Refusing to register webhooks to local or private IP addresses")
+
+        # Limit number of events and sanitize event names
+        if len(events) > 10:
+            raise ValueError("Too many events requested for webhook")
+
+        clean_events = []
+        for e in events:
+            if not isinstance(e, str):
+                continue
+            e_clean = re.sub(r"[^a-zA-Z0-9_\-]", "", e).lower()
+            if e_clean:
+                clean_events.append(e_clean)
 
         webhook_config = {
             'service': service_name,
             'url': webhook_url,
-            'events': events,
+            'events': clean_events,
             'created_at': datetime.now().isoformat(),
             'active': True
         }
 
         webhook_id = f"{service_name}_{hashlib.md5(webhook_url.encode()).hexdigest()[:8]}"
+
+        # simple threat detection on url and events (use AdvancedSecurity if available)
+        try:
+            from .advanced_security import AdvancedSecurity
+            adv = AdvancedSecurity()
+            threats = adv.detect_threats(webhook_url + ' ' + ' '.join(clean_events))
+            if threats and any(t.get('severity', 0) >= 5 for t in threats):
+                return f"❌ Webhook appears to contain suspicious content and was rejected"
+        except Exception:
+            # If advanced security isn't available or raises, proceed conservatively
+            pass
+
         self.webhooks[webhook_id] = webhook_config
         self.save_integrations()
 

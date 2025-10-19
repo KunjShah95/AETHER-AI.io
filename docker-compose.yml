@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  aetherai:
+    build: .
+    image: aetherai:latest
+    container_name: aetherai
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["aetherai"]

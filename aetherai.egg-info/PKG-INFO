@@ -1,3 +1,39 @@
+Metadata-Version: 2.4
+Name: aetherai
+Version: 0.1.0
+Summary: AetherAI - Interactive terminal assistant
+Author: Nexus Maintainers
+License: MIT License
+
+        Copyright (c) 2025 KUNJ SHAH
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: requests
+Requires-Dist: PyYAML
+Requires-Dist: rich
+Requires-Dist: python-dotenv
+Dynamic: license-file
+
 # 🚀 NEXUS AI Terminal Assistant
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://kunjshah95.github.io/NEXUS-AI.io/)
@@ -188,27 +224,29 @@ Distribute the binary and provide instructions to set environment variables (or 
 ## Project Structure
 
 ```
-NEXUS-AI.io/
-├── index.html                # Website homepage
-├── app.js                    # Website functionality
-├── styles.css                # Website styles
-├── CHANGELOG.md              # Version history
-├── terminal/                 # Main application (CLI)
-│   ├── main.py               # Entry point
-│   ├── requirements.txt      # Dependencies
-│   ├── install_*.{bat,sh}    # OS installers (root also contains installers)
-│   └── tests/                # Unit tests
-├── advanced_features.py
-├── analytics_monitor.py
-├── code_review_assistant.py
-├── context_aware_ai.py
-├── creative_tools.py
-├── games_learning.py
-├── advanced_security.py
-├── task_manager.py
-├── theme_manager.py
-├── integration_hub.py
-└── README.md
+## Project Structure
+
+    NEXUS-AI.io/
+    ├── index.html                # Website homepage
+    ├── app.js                    # Website functionality
+    ├── styles.css                # Website styles
+    ├── CHANGELOG.md              # Version history
+    ├── terminal/                 # Main application (CLI)
+    │   ├── main.py               # Entry point
+    │   ├── requirements.txt      # Dependencies
+    │   ├── install_*.{bat,sh}    # OS installers (root also contains installers)
+    │   └── tests/                # Unit tests
+    ├── advanced_features.py
+    ├── analytics_monitor.py
+    ├── code_review_assistant.py
+    ├── context_aware_ai.py
+    ├── creative_tools.py
+    ├── games_learning.py
+    ├── advanced_security.py
+    ├── task_manager.py
+    ├── theme_manager.py
+    ├── integration_hub.py
+    └── README.md
 ```
 
 ---

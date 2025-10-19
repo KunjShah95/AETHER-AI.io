@@ -1,3 +1,35 @@
+import json
+import threading
+from pathlib import Path
+class QuarantineQueue:
+    """Very small disk-backed quarantine queue for suspicious inputs.
+
+    This is intentionally minimal: writes JSON lines to a file and supports
+    iterating the entries. Consumers should review and remove items manually
+    or via administrative tooling.
+    """
+
+    def __init__(self, path: str = None):
+        if path is None:
+            path = str(Path.home() / ".aetherai_quarantine.jsonl")
+        self.path = Path(path)
+        self._lock = threading.Lock()
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+
+    def add(self, item: dict):
+        with self._lock, self.path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(item, ensure_ascii=False) + "\n")
+
+    def iter_all(self):
+        if not self.path.exists():
+            return iter(())
+        with self.path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                yield json.loads(line)
+
 #!/usr/bin/env python3
 """
 Context-Aware AI Module for NEXUS AI Terminal
@@ -132,20 +164,48 @@ class ContextAwareAI:
     def learn_topic(self, topic: str, content: str) -> str:
         """Learn about a specific technology or framework"""
         try:
-            if topic not in self.user_knowledge:
-                self.user_knowledge[topic] = {
+            # Basic validation & sanitization to reduce risk of data poisoning
+            if not isinstance(topic, str) or not isinstance(content, str):
+                return "❌ Invalid topic or content"
+
+            topic_clean = re.sub(r"[^a-zA-Z0-9_\- ]", "", topic).strip().lower()
+            content_clean = content.strip()
+
+            # Reject very large content blobs
+            if len(content_clean) > 20000:
+                return "❌ Content too large to ingest"
+
+            # Simple prompt-injection heuristics: reject content that contains
+            # directives to an LLM or suspicious sequences (e.g., script tags)
+            suspicious_patterns = [r"<script", r"ignore (previous|all) instructions", r"respond only with", r"disregard (previous|earlier) instructions"]
+            for p in suspicious_patterns:
+                try:
+                    if re.search(p, content_clean, re.IGNORECASE):
+                        return "🔒 Rejected content: suspicious patterns detected"
+                except re.error:
+                    continue
+
+            if topic_clean not in self.user_knowledge:
+                self.user_knowledge[topic_clean] = {
                     "content": [],
                     "learned_at": [],
-                    "usage_count": 0
+                    "usage_count": 0,
+                    "sources": []
                 }
 
-            self.user_knowledge[topic]["content"].append(content)
-            self.user_knowledge[topic]["learned_at"].append(time.time())
-            self.user_knowledge[topic]["usage_count"] += 1
+            # Store provenance lightly (timestamp + truncated content preview)
+            preview = content_clean[:500]
+            self.user_knowledge[topic_clean]["content"].append(content_clean)
+            self.user_knowledge[topic_clean]["learned_at"].append(time.time())
+            self.user_knowledge[topic_clean]["usage_count"] += 1
+            self.user_knowledge[topic_clean]["sources"].append({
+                "timestamp": time.time(),
+                "preview": preview
+            })
 
             self._save_learning()
 
-            return f"✅ Learned about '{topic}'. Knowledge stored for future reference."
+            return f"✅ Learned about '{topic_clean}'. Knowledge stored for future reference."
 
         except Exception as e:
             return f"❌ Learning failed: {str(e)}"
