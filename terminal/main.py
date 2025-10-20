@@ -4,6 +4,19 @@ import google.generativeai as genai
 from groq import Groq
 import ollama
 import subprocess
+# Use parser and CLI helper from diagnose_ollama as a robust fallback
+try:
+    from terminal.diagnose_ollama import parse_ollama_list_output, run_cli_list
+except Exception:
+    # If import fails, define simple fallbacks
+    def parse_ollama_list_output(text: str):
+        return []
+    def run_cli_list() -> str:
+        try:
+            cp = subprocess.run(['ollama', 'list'], capture_output=True, text=True, check=False)
+            return cp.stdout or cp.stderr or ''
+        except Exception:
+            return ''
 from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
@@ -312,8 +325,12 @@ class AIManager:
         
         # Ollama local
         if self.status["ollama"] == "Ready":
-            models = self._get_ollama_models()
-            self.status["ollama"] = f"✅ Ready ({models})" if models != "Unknown" else "❌ No models"
+            try:
+                models = self._get_ollama_models()
+                self.status["ollama"] = f"✅ Ready ({models})" if models != "Unknown" else "❌ No models"
+            except Exception as e:
+                self.status["ollama"] = f"❌ Error: {str(e)[:50]}..."
+                logging.error(f"Ollama model check failed: {str(e)}")
         else:
             self.status["ollama"] = "❌ Not installed"
         
@@ -338,18 +355,104 @@ class AIManager:
             self.status["mcp"] = "❌ Invalid API key format"
     
     def _check_ollama(self) -> bool:
+        # Try Python client first
         try:
-            ollama.list()
-            return True
-        except:
+            res = ollama.list()
+            # If structured response with models present, we're good
+            if isinstance(res, dict) and res.get('models'):
+                return True
+            # If client returned a non-empty string or list, consider it available
+            if res:
+                return True
+        except Exception:
+            pass
+
+        # Fall back to CLI: parse textual output for model table header or rows
+        try:
+            raw = run_cli_list()
+            parsed = parse_ollama_list_output(raw)
+            return bool(parsed)
+        except Exception:
             return False
     
     def _get_ollama_models(self) -> str:
+        # Try structured python client result first
         try:
-            models = [m["name"] for m in ollama.list()["models"]]
-            return ", ".join(models[:3]) + ("..." if len(models) > 3 else "")
-        except:
-            return "Unknown"
+            res = ollama.list()
+            models = []
+            
+            # Handle ListResponse object or dict
+            if hasattr(res, 'models'):
+                # It's a ListResponse object with .models attribute
+                model_list = res.models
+            elif isinstance(res, dict) and res.get('models'):
+                # It's a dict with 'models' key
+                model_list = res.get('models')
+            elif isinstance(res, list):
+                # It's already a list
+                model_list = res
+            else:
+                model_list = []
+            
+            for m in model_list:
+                # Handle Model objects (with attributes), dicts, or strings
+                if hasattr(m, 'model'):
+                    # It's a Model object with .model attribute
+                    name = m.model
+                elif hasattr(m, 'name'):
+                    # It's a Model object with .name attribute
+                    name = m.name
+                elif isinstance(m, dict):
+                    # It's a dict
+                    name = m.get('name') or m.get('model') or str(m)
+                else:
+                    # It's something else, convert to string
+                    name = str(m)
+                models.append(name)
+            
+            # If we have at least one model, format a short summary
+            if models:
+                return ", ".join(models[:3]) + ("..." if len(models) > 3 else "")
+        except Exception as e:
+            # Log the error for debugging
+            logging.warning(f"Error getting Ollama models from Python client: {str(e)}")
+            pass
+
+        # Fallback: call CLI and parse textual table
+        try:
+            raw = run_cli_list()
+            parsed = parse_ollama_list_output(raw)
+            names = []
+            for r in parsed:
+                # header keys may include 'NAME' or 'Name'
+                for k in r:
+                    if k.strip().upper() == 'NAME':
+                        val = r[k].strip()
+                        if val:
+                            names.append(val)
+                        break
+            if names:
+                return ", ".join(names[:3]) + ("..." if len(names) > 3 else "")
+            # If parsing produced rows but no name column, try splitting raw lines heuristically
+            for line in (raw or '').splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                # skip header-like lines
+                if line.upper().startswith('NAME') and 'SIZE' in line.upper():
+                    continue
+                # heuristically take first word as model name
+                parts = line.split()
+                if parts:
+                    names.append(parts[0])
+                    if len(names) >= 3:
+                        break
+            if names:
+                return ", ".join(names[:3]) + ("..." if len(names) > 3 else "")
+        except Exception:
+            pass
+
+        return "Unknown"
     
     def _query_huggingface(self, prompt: str) -> str:
         try:
@@ -425,10 +528,19 @@ class AIManager:
                             messages=[{"role": "user", "content": clean_prompt}]
                         )
                         
-                        if not isinstance(response, dict) or "message" not in response:
-                            raise APIError("Invalid Ollama response")
+                        # Handle both dict and ChatResponse object
+                        if hasattr(response, 'message'):
+                            # It's a ChatResponse object
+                            if hasattr(response.message, 'content'):
+                                content = response.message.content
+                            else:
+                                content = str(response.message)
+                        elif isinstance(response, dict) and "message" in response:
+                            # It's a dict
+                            content = response["message"].get("content", "")
+                        else:
+                            raise APIError(f"Invalid Ollama response type: {type(response)}")
                         
-                        content = response["message"].get("content", "")
                         if not content:
                             raise APIError("Empty Ollama response")
                         
@@ -1618,16 +1730,39 @@ class NexusAI:
                         specific_model = parts[2]
                         try:
                             # Check if the model exists
-                            ollama_models = ollama.list()["models"]
-                            model_names = [m["name"] for m in ollama_models]
+                            ollama_response = ollama.list()
+                            
+                            # Handle ListResponse object or dict
+                            if hasattr(ollama_response, 'models'):
+                                ollama_models = ollama_response.models
+                            elif isinstance(ollama_response, dict):
+                                ollama_models = ollama_response.get("models", [])
+                            else:
+                                ollama_models = []
+                            
+                            # Extract model names from the response
+                            model_names = []
+                            for m in ollama_models:
+                                if hasattr(m, 'model'):
+                                    model_names.append(m.model)
+                                elif hasattr(m, 'name'):
+                                    model_names.append(m.name)
+                                elif isinstance(m, dict):
+                                    model_names.append(m.get('name') or m.get('model', str(m)))
+                                else:
+                                    model_names.append(str(m))
                             
                             if specific_model in model_names:
                                 self.current_model = f"ollama:{specific_model}"
                                 self._save_config()
                                 return f"✅ Switched to Ollama model: {specific_model}"
                             else:
-                                available = ", ".join(model_names[:5])  # Show first 5
-                                return f"❌ Model '{specific_model}' not found.\n   Available: {available}{'...' if len(model_names) > 5 else ''}\n   Use /ollama-models to see all available models"
+                                if model_names:
+                                    available = ", ".join(model_names[:5])  # Show first 5
+                                    more_msg = f" (+{len(model_names) - 5} more)" if len(model_names) > 5 else ""
+                                    return f"❌ Model '{specific_model}' not found.\n   Available models: {available}{more_msg}\n   💡 Use /ollama-models to see all available models"
+                                else:
+                                    return f"❌ No Ollama models found. Please pull a model first.\n   Example: ollama pull llama3"
                         except Exception as e:
                             return f"❌ Error checking Ollama models: {str(e)}\n   Make sure Ollama is running"
                     else:
@@ -1700,7 +1835,14 @@ class NexusAI:
                     # Support detailed specs: /ollama-models [model_name]
                     parts = command.split(maxsplit=1)
                     try:
-                        models = ollama.list().get("models", [])
+                        ollama_response = ollama.list()
+                        # Handle ListResponse object or dict
+                        if hasattr(ollama_response, 'models'):
+                            models = ollama_response.models
+                        elif isinstance(ollama_response, dict):
+                            models = ollama_response.get("models", [])
+                        else:
+                            models = []
                     except Exception as e:
                         return f"❌ Ollama not available: {str(e)[:100]}"
 
@@ -1723,15 +1865,43 @@ class NexusAI:
                     if len(parts) == 2 and parts[1].strip():
                         target = parts[1].strip()
                         # Find the matching model entry (for size/modified)
-                        meta = next((m for m in models if m.get("name") == target), None)
+                        meta = None
+                        for m in models:
+                            if hasattr(m, 'model') and m.model == target:
+                                meta = m
+                                break
+                            elif hasattr(m, 'name') and m.name == target:
+                                meta = m
+                                break
+                            elif isinstance(m, dict) and m.get("name") == target:
+                                meta = m
+                                break
+                        
                         try:
                             info = ollama.show(target)
                         except Exception as e:
                             return f"❌ Could not fetch specs for '{target}': {str(e)[:100]}"
 
                         details = info.get("details", {}) or {}
-                        size_str = _fmt_size(meta.get("size", 0)) if meta else "Unknown"
-                        modified = (meta or {}).get("modified_at", "Unknown")
+                        
+                        # Extract size and modified from meta
+                        if meta:
+                            if hasattr(meta, 'size'):
+                                size_str = _fmt_size(meta.size)
+                            elif isinstance(meta, dict):
+                                size_str = _fmt_size(meta.get("size", 0))
+                            else:
+                                size_str = "Unknown"
+                                
+                            if hasattr(meta, 'modified_at'):
+                                modified = str(meta.modified_at) or "Unknown"
+                            elif isinstance(meta, dict):
+                                modified = meta.get("modified_at", "Unknown")
+                            else:
+                                modified = "Unknown"
+                        else:
+                            size_str = "Unknown"
+                            modified = "Unknown"
 
                         lines = [
                             f"🦙 Ollama Model Details: {target}",
@@ -1754,19 +1924,35 @@ class NexusAI:
                     sep = "-" * len(header)
                     rows = ["🦙 Installed Ollama Models:", header, sep]
                     for m in models:
-                        name = m.get("name", "unknown")
-                        size = _fmt_size(m.get("size", 0))
-                        modified = m.get("modified_at", "") or ""
-                        # Try to enrich with details via ollama.show (best-effort)
-                        params = family = quant = "?"
-                        try:
-                            info = ollama.show(name)
-                            d = (info or {}).get('details', {}) or {}
-                            params = d.get('parameter_size', params) or params
-                            family = d.get('family', family) or (d.get('families', [family])[0] if isinstance(d.get('families'), list) and d.get('families') else family)
-                            quant = d.get('quantization_level', quant) or quant
-                        except Exception:
-                            pass
+                        # Handle both dict and Model object
+                        if hasattr(m, 'model'):
+                            # It's a Model object
+                            name = m.model
+                            size = _fmt_size(getattr(m, 'size', 0))
+                            modified = str(getattr(m, 'modified_at', '')) or ''
+                            # Get details from the model object if available
+                            details = getattr(m, 'details', None)
+                            if details:
+                                params = getattr(details, 'parameter_size', '?') or '?'
+                                family = getattr(details, 'family', '?') or '?'
+                                quant = getattr(details, 'quantization_level', '?') or '?'
+                            else:
+                                params = family = quant = "?"
+                        else:
+                            # It's a dict (fallback)
+                            name = m.get("name", "unknown")
+                            size = _fmt_size(m.get("size", 0))
+                            modified = m.get("modified_at", "") or ""
+                            params = family = quant = "?"
+                            # Try to enrich with details via ollama.show (best-effort)
+                            try:
+                                info = ollama.show(name)
+                                d = (info or {}).get('details', {}) or {}
+                                params = d.get('parameter_size', params) or params
+                                family = d.get('family', family) or (d.get('families', [family])[0] if isinstance(d.get('families'), list) and d.get('families') else family)
+                                quant = d.get('quantization_level', quant) or quant
+                            except Exception:
+                                pass
                         rows.append(f"{name:<36}  {size:>10}  {params:>8}  {family:<12}  {quant:<8}  {modified}")
                     rows.append("\n💡 Use '/ollama-models [model_name]' to see full specs for a single model")
                     rows.append("💡 Use '/switch ollama [model_name]' to select a model")
@@ -2930,15 +3116,27 @@ class NexusAI:
                     return "❌ Ollama is not running or not installed.\n   Please start Ollama first."
                 
                 try:
-                    models_data = ollama.list()["models"]
+                    # Get models - handle both dict and ListResponse object
+                    models_response = ollama.list()
+                    if hasattr(models_response, 'models'):
+                        models_data = models_response.models
+                    else:
+                        models_data = models_response.get("models", [])
+                    
                     if not models_data:
                         return "❌ No Ollama models found.\n   Use 'ollama pull [model]' to download models."
                     
                     output = "🦙 Available Ollama Models:\n\n"
                     for model in models_data:
-                        name = model.get("name", "Unknown")
-                        size = model.get("size", 0)
-                        modified = model.get("modified_at", "Unknown")
+                        # Handle both dict and Model object
+                        if hasattr(model, 'model'):
+                            name = model.model
+                            size = getattr(model, 'size', 0)
+                            modified = getattr(model, 'modified_at', "Unknown")
+                        else:
+                            name = model.get("name", "Unknown")
+                            size = model.get("size", 0)
+                            modified = model.get("modified_at", "Unknown")
                         
                         # Format size
                         if size > 1024**3:  # GB
@@ -2964,7 +3162,9 @@ class NexusAI:
                         output += f"   Modified: {date_str}\n\n"
                     
                     output += f"💡 Use '/switch ollama [model_name]' to switch to a specific model\n"
-                    output += f"💡 Example: /switch ollama {models_data[0]['name']}"
+                    # Get first model name correctly
+                    first_model_name = models_data[0].model if hasattr(models_data[0], 'model') else models_data[0].get('name', 'model_name')
+                    output += f"💡 Example: /switch ollama {first_model_name}"
                     return output
                     
                 except Exception as e:

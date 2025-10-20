@@ -1,23 +1,65 @@
-version: "3.8"
-
 services:
   aetherai:
     build:
-      context: ./terminal
-      dockerfile: Dockerfile
-    image: aetherai:local
-    container_name: aetherai_cli
-    # Mount repository for rapid iteration (bind mount, use with caution on Windows)
-    volumes:
-      - ./terminal:/app:rw
-    tty: true
-    stdin_open: true
+      context: .
+      dockerfile: terminal/Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: ghcr.io/kunjshah95/aetherai:latest
+    container_name: aetherai_terminal
+
+    # Environment variables - use .env file or set here
     environment:
       - PYTHONUNBUFFERED=1
       - TERM=xterm-256color
-    # Keep the CLI interactive by default; override the command to run inline scripts
-    command: ["python", "main.py"]
-    # Optional: map a local port if any HTTP admin API added later
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - MCP_API_KEY=${MCP_API_KEY:-}
+
+    # Volumes for persistent data
+    volumes:
+      - aetherai-data:/root/.nexus
+      - aetherai-logs:/app/logs
+      # For development - mount code (comment out for production)
+      # - ./terminal:/app/terminal:ro
+
+    # Interactive terminal
+    tty: true
+    stdin_open: true
+
+    # Port mapping for future web interface
     ports:
       - "8080:8080"
+
+    # Restart policy
     restart: unless-stopped
+
+    # Resource limits (adjust as needed)
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  aetherai-data:
+    driver: local
+  aetherai-logs:
+    driver: local
+
+networks:
+  default:
+    name: aetherai-network

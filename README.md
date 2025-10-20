@@ -43,7 +43,6 @@ Choose the option that fits your environment.
 
 Before running an installer, verify the SHA256 checksum in `dist/SHA256SUMS.txt`:
 
-
 Windows (PowerShell):
 
 ```powershell

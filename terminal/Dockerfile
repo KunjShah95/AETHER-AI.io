@@ -1,41 +1,66 @@
-# Clean Dockerfile for AetherAI (inspect before replacing terminal/Dockerfile)
-# Use a small official Python image
-FROM python:3.12-slim
+# Multi-stage Dockerfile for AetherAI Terminal Assistant
+# Stage 1: Builder
+FROM python:3.11-slim as builder
 
-# Set a working directory
+# Set working directory
 WORKDIR /app
 
-# Install common system dependencies required to build wheels and multimedia
-# Keep the list minimal to reduce image size. Add packages as specific failures appear.
+# Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    ca-certificates \
-    pkg-config \
-    libssl-dev \
-    libpq-dev \
-    libsndfile1 \
-    ffmpeg \
+    gcc \
+    g++ \
     git \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy only requirements first to leverage Docker cache
-COPY requirements.txt /app/requirements.txt
-# Ensure pip, setuptools and wheel are up-to-date to prefer wheels over sdists
-RUN python -m pip install --upgrade pip setuptools wheel
-# Allow build backends to access project files during isolated builds if necessary
-ENV PIP_NO_BUILD_ISOLATION=0
-RUN sh -c "pip install --no-cache-dir -r /app/requirements.txt || ( echo 'WARNING: pip install failed — see errors above. Inspect failing package logs.'; exit 1 )"
+# Copy requirements file
+COPY terminal/requirements.txt .
 
-# Copy application source
-COPY . /app
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir --user -r requirements.txt
 
-# Create and switch to a non-root user for runtime
-ARG UID=1000
-ARG GID=1000
-RUN groupadd -g ${GID} appuser && \
-    useradd -m -u ${UID} -g ${GID} -s /bin/bash appuser
-USER appuser
+# Stage 2: Runtime
+FROM python:3.11-slim
 
-# Default command – adjust if your entrypoint differs
-CMD ["python", "main.py"]
+# Set working directory
+WORKDIR /app
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libpq5 \
+    libsndfile1 \
+    ffmpeg \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python packages from builder
+COPY --from=builder /root/.local /root/.local
+
+# Make sure scripts in .local are usable
+ENV PATH=/root/.local/bin:$PATH
+
+# Copy application files
+COPY terminal/ /app/terminal/
+COPY aetherai/ /app/aetherai/
+COPY pyproject.toml setup.cfg LICENSE README.md /app/
+
+# Create necessary directories
+RUN mkdir -p /root/.nexus /app/logs
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    TERM=xterm-256color
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)" || exit 1
+
+# Expose port if needed for future web interface
+EXPOSE 8080
+
+# Default command
+CMD ["python", "terminal/main.py"]
