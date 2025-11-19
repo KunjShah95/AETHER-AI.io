@@ -56,7 +56,7 @@ def _lazy_load_advanced_modules():
             "Path": Path,
         })
     except ImportError:
-        # Optional dependencies missing – continue without them.
+        # Optional dependencies missing  continue without them.
         pass
     return modules
 
@@ -988,7 +988,7 @@ class NexusAI:
             logging.error(f"Config save error: {str(e)}")
     
     def show_banner(self):
-        # Cool ASCII Banner (AetherAI)
+        # Cool ASCII Banner (Aether AI)
         banner_text = Text()
         banner_text.append("\n")
         banner_text.append("  ___   ______  _______  _______  _____    _____   _____ \n", style="bold cyan")
@@ -997,7 +997,7 @@ class NexusAI:
         banner_text.append("   A     A EEE    T     HHHHH  EEE    RRRR A     A  I   \n", style="bold yellow")
         banner_text.append("   AAAAAAA E      T     H   H  E      R  R AAAAAAA  I   \n", style="bold yellow")
         banner_text.append("   A     A EEEEE  T     H   H  EEEEE  R   R A     A IIIII\n", style="bold yellow")
-        banner_text.append(f"\n🤖 AetherAI Terminal v{VERSION}\n", style="bold green")
+        banner_text.append(f"\n🤖 Aether AI Terminal v{VERSION}\n", style="bold green")
         banner_text.append("⚡ Multi-Model • 🔒 Secure • 🚀 Enhanced\n", style="bold yellow")
         
         console.print(Panel(banner_text, border_style="bright_blue", padding=(1, 2)))
@@ -3337,9 +3337,9 @@ class NexusAI:
 
 # --- Main Loop ---
 def main() -> int:
-    """Start the interactive AetherAI terminal. Returns exit code."""
+    """Start the interactive Aether AI terminal. Returns exit code."""
     try:
-        console.print("[bold green]🚀 Starting AetherAI Terminal...[/bold green]")
+        console.print("[bold green]🚀 Starting Aether AI Terminal...[/bold green]")
         ai = NexusAI()
 
         while True:
@@ -3348,7 +3348,7 @@ def main() -> int:
                 prompt = input(f"\n[{model_display}] 🚀 > ").strip()
 
                 if prompt.lower() in ["exit", "/exit", "quit", "/quit"]:
-                    console.print("\n[bold green]👋 Thanks for using AetherAI Terminal![/bold green]")
+                    console.print("\n[bold green]👋 Thanks for using Aether AI Terminal![/bold green]")
                     console.print("[bold cyan]🚀 Keep innovating![/bold cyan]\n")
                     return 0
 
