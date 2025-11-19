@@ -114,3 +114,4 @@
 2025-10-20 11:44:43,848 - INFO - HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
 2025-10-20 11:45:06,836 - INFO - HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
 2025-10-20 12:04:09,155 - INFO - HTTP Request: POST http://127.0.0.1:11434/api/chat "HTTP/1.1 200 OK"
+2025-11-19 06:58:05,315 - CRITICAL - Fatal error: name 'ContextAwareAI' is not defined

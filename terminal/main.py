@@ -37,24 +37,28 @@ import json
 import threading
 import openai
 
-# Additional imports for advanced features
-try:
-    import psutil
-    import platform
-    import tempfile
-    import cProfile
-    import pstats
-    import io
-    from pathlib import Path
-except ImportError:
-    # Optional dependencies - features will gracefully fail if not available
-    pass
-
-# Import advanced features module
-try:
-    from advanced_features import AdvancedFeatures
-except ImportError:
-    AdvancedFeatures = None
+# Optional advanced feature imports are loaded lazily to improve startup time.
+def _lazy_load_advanced_modules():
+    """Import heavy optional modules only when needed.
+    Returns a dict with module references or empty dict if unavailable.
+    """
+    modules = {}
+    try:
+        import psutil, platform, tempfile, cProfile, pstats, io
+        from pathlib import Path
+        modules.update({
+            "psutil": psutil,
+            "platform": platform,
+            "tempfile": tempfile,
+            "cProfile": cProfile,
+            "pstats": pstats,
+            "io": io,
+            "Path": Path,
+        })
+    except ImportError:
+        # Optional dependencies missing – continue without them.
+        pass
+    return modules
 
 # Import new advanced modules
 try:
@@ -78,6 +82,72 @@ except ImportError:
     CodeReviewAssistant = None
     IntegrationHub = None
 
+AdvancedFeatures = None
+# Cache for Ollama model list to avoid repeated expensive calls.
+from functools import lru_cache
+@lru_cache(maxsize=1)
+def _cached_ollama_models():
+    """Retrieve Ollama models once per process run.
+    This reduces latency for repeated queries.
+    """
+    try:
+        # Avoid circular import by importing AIManager locally or re-implementing logic
+        # Since AIManager is defined below, we can't use it here directly if it's not defined yet.
+        # However, we can just use the raw logic or defer the call.
+        # Better approach: Use a standalone function that mimics the logic or just call the CLI/library directly.
+        
+        # Try Python client first
+        try:
+            res = ollama.list()
+            models = []
+            if hasattr(res, 'models'):
+                model_list = res.models
+            elif isinstance(res, dict) and res.get('models'):
+                model_list = res.get('models')
+            elif isinstance(res, list):
+                model_list = res
+            else:
+                model_list = []
+            
+            for m in model_list:
+                if hasattr(m, 'model'):
+                    name = m.model
+                elif hasattr(m, 'name'):
+                    name = m.name
+                elif isinstance(m, dict):
+                    name = m.get('name') or m.get('model') or str(m)
+                else:
+                    name = str(m)
+                models.append(name)
+            
+            if models:
+                return ", ".join(models[:3]) + ("..." if len(models) > 3 else "")
+        except Exception:
+            pass
+
+        # Fallback to CLI
+        try:
+            raw = run_cli_list()
+            # We can't easily reuse parse_ollama_list_output here if it's defined below or imported.
+            # But wait, parse_ollama_list_output IS imported/defined at top.
+            parsed = parse_ollama_list_output(raw)
+            names = []
+            for r in parsed:
+                for k in r:
+                    if k.strip().upper() == 'NAME':
+                        val = r[k].strip()
+                        if val:
+                            names.append(val)
+                        break
+            if names:
+                return ", ".join(names[:3]) + ("..." if len(names) > 3 else "")
+        except Exception:
+            pass
+        
+        return "Unknown"
+    except Exception:
+        return "Unknown"
+
 # --- Configuration ---
 load_dotenv()
 
@@ -99,7 +169,7 @@ def update_console_theme(theme_manager=None):
 
 logging.basicConfig(
     filename='ai_assistant.log',
-    level=logging.INFO,
+    level=logging.WARNING,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
@@ -245,6 +315,32 @@ class SecurityManager:
             return False
         return True
 
+# --- Prompt Cache ---
+from collections import OrderedDict
+class PromptCache:
+    def __init__(self, ttl=5, maxsize=100):
+        self.ttl = ttl
+        self.maxsize = maxsize
+        self.store = OrderedDict()
+    def get(self, key):
+        entry = self.store.get(key)
+        if entry and time.time() - entry[1] < self.ttl:
+            return entry[0]
+        return None
+    def set(self, key, value):
+        if len(self.store) >= self.maxsize:
+            self.store.popitem(last=False)
+        self.store[key] = (value, time.time())
+
+_prompt_cache = PromptCache()
+
+# --- Thread Pool ---
+from concurrent.futures import ThreadPoolExecutor
+_executor = ThreadPoolExecutor(max_workers=4)
+
+def _run_in_background(fn, *args, **kwargs):
+    return _executor.submit(fn, *args, **kwargs)
+
 # --- AI Manager ---
 class RateLimiter:
     """Simple in-memory rate limiter per user.
@@ -296,63 +392,69 @@ class AIManager:
         return session
         
     def _init_services(self):
+        # Cache env vars once
+        _GEMINI_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        _GROQ_KEY = os.getenv("GROQ_API_KEY")
+        _OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+        _MCP_KEY = os.getenv("MCP_API_KEY")
+
         # Gemini 2.0 Flash (Fixed API)
-        gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        gemini_key = _GEMINI_KEY
         if gemini_key and self.security.validate_api_key(gemini_key, "gemini"):
             try:
                 genai.configure(api_key=gemini_key)
                 self.gemini = genai.GenerativeModel("gemini-2.0-flash-exp")
-                self.status["gemini"] = "✅ Ready"
+                self.status["gemini"] = " Ready"
                 logging.info("Gemini 2.0 Flash initialized successfully")
             except Exception as e:
-                self.status["gemini"] = f"❌ Error: {str(e)[:50]}..."
+                self.status["gemini"] = f" Error: {str(e)[:50]}..."
                 logging.error(f"Gemini init failed: {str(e)}")
         elif gemini_key:
-            self.status["gemini"] = "❌ Invalid API key format"
+            self.status["gemini"] = " Invalid API key format"
         
         # Groq Cloud
-        groq_key = os.getenv("GROQ_API_KEY")
+        groq_key = _GROQ_KEY
         if groq_key and self.security.validate_api_key(groq_key, "groq"):
             try:
                 self.groq = Groq(api_key=groq_key)
-                self.status["groq"] = "✅ Ready"
+                self.status["groq"] = " Ready"
                 logging.info("Groq service initialized")
             except Exception as e:
-                self.status["groq"] = f"❌ Error: {str(e)[:50]}..."
+                self.status["groq"] = f" Error: {str(e)[:50]}..."
                 logging.error(f"Groq init failed: {str(e)}")
         elif groq_key:
-            self.status["groq"] = "❌ Invalid API key format"
+            self.status["groq"] = " Invalid API key format"
         
         # Ollama local
         if self.status["ollama"] == "Ready":
             try:
                 models = self._get_ollama_models()
-                self.status["ollama"] = f"✅ Ready ({models})" if models != "Unknown" else "❌ No models"
+                self.status["ollama"] = f" Ready ({models})" if models != "Unknown" else "❌ No models"
             except Exception as e:
-                self.status["ollama"] = f"❌ Error: {str(e)[:50]}..."
+                self.status["ollama"] = f" Error: {str(e)[:50]}..."
                 logging.error(f"Ollama model check failed: {str(e)}")
         else:
-            self.status["ollama"] = "❌ Not installed"
+            self.status["ollama"] = " Not installed"
         
         # ChatGPT (OpenAI)
-        openai_key = os.getenv("OPENAI_API_KEY")
+        openai_key = _OPENAI_KEY
         if openai_key and self.security.validate_api_key(openai_key, "generic"):
             try:
                 openai.api_key = openai_key
-                self.status["chatgpt"] = "✅ Ready"
+                self.status["chatgpt"] = " Ready"
                 logging.info("ChatGPT (OpenAI) initialized successfully")
             except Exception as e:
-                self.status["chatgpt"] = f"❌ Error: {str(e)[:50]}..."
+                self.status["chatgpt"] = f" Error: {str(e)[:50]}..."
                 logging.error(f"ChatGPT init failed: {str(e)}")
         elif openai_key:
-            self.status["chatgpt"] = "❌ Invalid API key format"
+            self.status["chatgpt"] = " Invalid API key format"
         
         # MCP (Model Context Protocol)
-        mcp_key = os.getenv("MCP_API_KEY")
+        mcp_key = _MCP_KEY
         if mcp_key and self.security.validate_api_key(mcp_key, "generic"):
-            self.status["mcp"] = "✅ Ready"
+            self.status["mcp"] = " Ready"
         elif mcp_key:
-            self.status["mcp"] = "❌ Invalid API key format"
+            self.status["mcp"] = " Invalid API key format"
     
     def _check_ollama(self) -> bool:
         # Try Python client first
@@ -369,6 +471,15 @@ class AIManager:
 
         # Fall back to CLI: parse textual output for model table header or rows
         try:
+            # Use cached model list function if available, otherwise direct call
+            try:
+                raw = _cached_ollama_models()
+                # If it returns a string description, we just check if it's not "Unknown"
+                if raw and raw != "Unknown":
+                    return True
+            except NameError:
+                pass
+            
             raw = run_cli_list()
             parsed = parse_ollama_list_output(raw)
             return bool(parsed)
@@ -458,7 +569,7 @@ class AIManager:
         try:
             hf_token = os.getenv("HUGGINGFACE_TOKEN")
             if not hf_token or not self.security.validate_api_key(hf_token, "huggingface"):
-                return "❌ HuggingFace token not configured or invalid"
+                return " HuggingFace token not configured or invalid"
             
             response = self.session.post(
                 "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
@@ -471,18 +582,24 @@ class AIManager:
                 if isinstance(result, list) and result:
                     return result[0].get("generated_text", "No response")[:2000]
             
-            return f"❌ HuggingFace API Error: {response.status_code}"
+            return f" HuggingFace API Error: {response.status_code}"
         except Exception as e:
-            return f"❌ HuggingFace unavailable: {str(e)[:50]}..."
+            return f" HuggingFace unavailable: {str(e)[:50]}..."
     
     def query(self, model: str, prompt: str) -> str:
         if not prompt or len(prompt.strip()) == 0:
-            return "❌ Empty prompt provided"
+            return " Empty prompt provided"
         
         try:
             clean_prompt = self.security.sanitize(prompt)
         except SecurityError as e:
-            return f"🔒 Security error: {str(e)}"
+            return f" Security error: {str(e)}"
+        
+        # Check cache
+        cache_key = (model, hashlib.sha256(clean_prompt.encode()).hexdigest())
+        cached = _prompt_cache.get(cache_key)
+        if cached:
+            return cached
         
         for attempt in range(MAX_RETRIES):
             try:
@@ -497,8 +614,9 @@ class AIManager:
                     
                     if not response or not hasattr(response, 'text') or not response.text:
                         raise APIError("Invalid Gemini response")
-                    
-                    return response.text[:2000]
+                    result_text = response.text[:2000]
+                    _prompt_cache.set(cache_key, result_text)
+                    return result_text
                 
                 elif model == "groq" and self.groq:
                     response = self.groq.chat.completions.create(
@@ -510,11 +628,13 @@ class AIManager:
                     if not response or not response.choices or not response.choices[0].message.content:
                         raise APIError("Invalid Groq response")
                     
-                    return response.choices[0].message.content[:2000]
+                    result_text = response.choices[0].message.content[:2000]
+                    _prompt_cache.set(cache_key, result_text)
+                    return result_text
                 
                 elif model == "ollama" or model.startswith("ollama:"):
                     if not self._check_ollama():
-                        return "❌ Ollama not available"
+                        return " Ollama not available"
                     
                     # Extract specific model name if provided
                     if ":" in model:
@@ -544,20 +664,20 @@ class AIManager:
                         if not content:
                             raise APIError("Empty Ollama response")
                         
-                        return content[:2000]
+                        result_text = content[:2000]
+                        _prompt_cache.set(cache_key, result_text)
+                        return result_text
                     except Exception as e:
-                        if "model not found" in str(e).lower():
-                            return f"❌ Ollama model '{ollama_model}' not found.\n   Use /ollama-models to see available models"
-                        else:
-                            raise
-                
+                        return f"❌ Error: {str(e)}"
                 elif model == "huggingface":
-                    return self._query_huggingface(clean_prompt)
+                    result_text = self._query_huggingface(clean_prompt)
+                    _prompt_cache.set(cache_key, result_text)
+                    return result_text
                 
                 elif model == "chatgpt":
                     openai_key = os.getenv("OPENAI_API_KEY")
                     if not openai_key or not self.security.validate_api_key(openai_key, "generic"):
-                        return "❌ OpenAI API key not configured or invalid"
+                        return " OpenAI API key not configured or invalid"
                     response = openai.ChatCompletion.create(
                         model="gpt-3.5-turbo",
                         messages=[{"role": "user", "content": clean_prompt}],
@@ -565,39 +685,43 @@ class AIManager:
                     )
                     if not response or not response.choices or not response.choices[0].message.content:
                         raise APIError("Invalid ChatGPT response")
-                    return response.choices[0].message.content[:2000]
+                    result_text = response.choices[0].message.content[:2000]
+                    _prompt_cache.set(cache_key, result_text)
+                    return result_text
                 
                 elif model == "mcp":
                     mcp_key = os.getenv("MCP_API_KEY")
                     mcp_url = os.getenv("MCP_URL", "http://localhost:8080/api/v1/completions")
                     if not mcp_key:
-                        return "❌ MCP API key not configured"
+                        return " MCP API key not configured"
                     headers = {"Authorization": f"Bearer {mcp_key}", "Content-Type": "application/json"}
                     data = {"prompt": clean_prompt, "max_tokens": 1000}
                     try:
                         resp = self.session.post(mcp_url, headers=headers, json=data, timeout=REQUEST_TIMEOUT)
                         if resp.status_code == 200:
                             result = resp.json()
-                            return result.get("text", "No response")[:2000]
-                        return f"❌ MCP API Error: {resp.status_code}"
+                            result_text = result.get("text", "No response")[:2000]
+                            _prompt_cache.set(cache_key, result_text)
+                            return result_text
+                        return f" MCP API Error: {resp.status_code}"
                     except Exception as e:
-                        return f"❌ MCP unavailable: {str(e)[:50]}..."
+                        return f" MCP unavailable: {str(e)[:50]}..."
                 
                 else:
-                    return f"❌ Model '{model}' not available"
+                    return f" Model '{model}' not available"
                 
             except APIError as e:
                 if attempt == MAX_RETRIES - 1:
-                    return f"❌ {model} API error: {str(e)}"
+                    return f" {model} API error: {str(e)}"
                 time.sleep(RATE_LIMIT_DELAY * (attempt + 1))
                 
             except Exception as e:
                 logging.warning(f"Attempt {attempt+1} failed for {model}: {str(e)}")
                 if attempt == MAX_RETRIES - 1:
-                    return f"❌ {model} error: {str(e)[:50]}..."
+                    return f" {model} error: {str(e)[:50]}..."
                 time.sleep(RATE_LIMIT_DELAY * (attempt + 1))
         
-        return f"❌ {model} unavailable after {MAX_RETRIES} attempts"
+        return f" {model} unavailable after {MAX_RETRIES} attempts"
 
 # --- User Management ---
 class UserManager:
@@ -785,15 +909,17 @@ class UserManager:
         t.start()
 
     def update_activity(self, username, action):
-        self.last_active[username] = time.time()
-        if username not in self.activity_log:
-            self.activity_log[username] = []
-        self.activity_log[username].append((time.strftime('%Y-%m-%d %H:%M:%S'), action))
-        if len(self.activity_log[username]) > 100:
-            self.activity_log[username] = self.activity_log[username][-100:]
-        self.audit_log.append((username, time.strftime('%Y-%m-%d %H:%M:%S'), action))
-        if len(self.audit_log) > 500:
-            self.audit_log = self.audit_log[-500:]
+        def _do_update():
+            self.last_active[username] = time.time()
+            if username not in self.activity_log:
+                self.activity_log[username] = []
+            self.activity_log[username].append((time.strftime('%Y-%m-%d %H:%M:%S'), action))
+            if len(self.activity_log[username]) > 100:
+                self.activity_log[username] = self.activity_log[username][-100:]
+            self.audit_log.append((username, time.strftime('%Y-%m-%d %H:%M:%S'), action))
+            if len(self.audit_log) > 500:
+                self.audit_log = self.audit_log[-500:]
+        _run_in_background(_do_update)
 
 # --- Core Application ---
 class NexusAI:
@@ -925,8 +1051,8 @@ class NexusAI:
                 parts, capture_output=True,
                 text=True, timeout=15
             )
-            output = (result.stdout or "")[:1000]
-            error = (result.stderr or "")[:1000]
+            output = (result.stdout or "")[:2000]
+            error = (result.stderr or "")[:2000]
             return output if output else error or "Command executed"
         except subprocess.TimeoutExpired:
             return "❌ Command timed out (15s limit)"
@@ -1345,6 +1471,15 @@ class NexusAI:
                     return "❌ Could not retrieve repository information"
             
             # --- Additional Git Commands ---
+            if cmd.startswith("git "):
+                # Run git commands in background to keep UI responsive
+                def _run_git():
+                    res = self.execute_git_command(command) # Use 'command' here, not 'cmd'
+                    console.print(f"\n{res}")
+                    console.print(f"\n[{self.current_model.upper()}] 🚀 > ", end="")
+                _run_in_background(_run_git)
+                return "⏳ Git command running in background..."
+            
             if cmd == "git init":
                 return self.execute_git_command("git init")
             
@@ -2197,10 +2332,10 @@ class NexusAI:
                         results = re.findall(r'<a rel="nofollow" class="result__a" href="(.*?)">(.*?)</a>', resp.text)
 
                         if not results:
-                            return "🔍 No search results found. Try different keywords."
+                            return " No search results found. Try different keywords."
 
                         # Create a nice table for results
-                        search_table = Table(title=f"🔍 Web Search Results for: '{query}'", show_header=True, header_style="bold blue")
+                        search_table = Table(title=f" Web Search Results for: '{query}'", show_header=True, header_style="bold blue")
                         search_table.add_column("#", style="cyan", width=3)
                         search_table.add_column("Title", style="white", min_width=40)
                         search_table.add_column("URL", style="green", min_width=30)
@@ -2219,18 +2354,18 @@ class NexusAI:
                             search_table.add_row(str(i+1), clean_title, url)
 
                         console.print(search_table)
-                        console.print(f"\n📊 Found {len(results)} results (showing top 8)")
-                        console.print("💡 Click on URLs to visit the pages")
+                        console.print(f"\n Found {len(results)} results (showing top 8)")
+                        console.print(" Click on URLs to visit the pages")
                         return ""
 
-                    return f"❌ Web search error: HTTP {resp.status_code}"
+                    return f" Web search error: HTTP {resp.status_code}"
 
                 except requests.exceptions.Timeout:
-                    return "❌ Web search timed out. Try again later."
+                    return " Web search timed out. Try again later."
                 except requests.exceptions.ConnectionError:
-                    return "❌ No internet connection. Check your network."
+                    return " No internet connection. Check your network."
                 except Exception as e:
-                    return f"❌ Web search failed: {str(e)[:100]}"
+                    return f" Web search failed: {str(e)[:100]}"
             # --- Voice Input Command ---
             try:
                 import speech_recognition as sr
@@ -2242,7 +2377,7 @@ class NexusAI:
                     return "SpeechRecognition not installed. Please install it to use voice input."
                 recognizer = sr.Recognizer()
                 with sr.Microphone() as source:
-                    print("🎤 Speak now...")
+                    print(" Speak now...")
                     audio = recognizer.listen(source, timeout=5)
                 try:
                     text = recognizer.recognize_google(audio)
@@ -2262,7 +2397,7 @@ class NexusAI:
                 if len(parts) != 2:
                     return "Usage: /learn [topic] - Teach AI about a technology/framework"
                 if not self.context_ai:
-                    return "❌ Context-Aware AI module not available"
+                    return " Context-Aware AI module not available"
                 topic, content = parts[1], f"User is learning about {parts[1]}"
                 return self.context_ai.learn_topic(topic, content)
 
@@ -2274,16 +2409,16 @@ class NexusAI:
                 if len(parts) != 2:
                     return "Usage: /remind [task] - Set a reminder"
                 if not self.context_ai:
-                    return "❌ Context-Aware AI module not available"
+                    return " Context-Aware AI module not available"
                 return self.context_ai.remind_task(parts[1])
 
             if cmd == "reminders":
                 if not self.context_ai:
-                    return "❌ Context-Aware AI module not available"
+                    return " Context-Aware AI module not available"
                 reminders = self.context_ai.get_reminders()
                 if not reminders:
-                    return "📝 No active reminders"
-                output = "📝 Your Reminders:\n"
+                    return " No active reminders"
+                output = " Your Reminders:\n"
                 for i, reminder in enumerate(reminders):
                     output += f"{i+1}. {reminder['task']}"
                     if reminder.get('deadline'):
