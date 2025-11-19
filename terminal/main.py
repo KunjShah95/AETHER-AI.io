@@ -37,6 +37,29 @@ import json
 import threading
 import openai
 
+# --- New Feature Imports ---
+try:
+    from terminal.history import HistoryManager
+    from terminal.plugin_manager import PluginManager
+    from terminal.voice import VoiceManager
+    from terminal.rag import RAGManager
+    from terminal.analytics import AnalyticsManager
+except ImportError:
+    # Fallback for direct execution or different path structure
+    try:
+        from history import HistoryManager
+        from plugin_manager import PluginManager
+        from voice import VoiceManager
+        from rag import RAGManager
+        from analytics import AnalyticsManager
+    except ImportError:
+        # Define dummy classes if imports fail to prevent crash
+        class HistoryManager: save_session = lambda *a: None
+        class PluginManager: load_plugins = lambda *a: None
+        class VoiceManager: is_available = lambda: False
+        class RAGManager: query = lambda *a: []
+        class AnalyticsManager: log_usage = lambda *a: None
+
 # Optional advanced feature imports are loaded lazily to improve startup time.
 def _lazy_load_advanced_modules():
     """Import heavy optional modules only when needed.
@@ -932,6 +955,16 @@ class NexusAI:
             'ls', 'pwd', 'whoami', 'date', 'uptime', 'echo', 'cat', 'head', 'tail', 'df', 'du', 'free', 'uname', 'id', 'git'
         ]
         
+        # Initialize new core features
+        self.history_manager = HistoryManager()
+        self.plugin_manager = PluginManager()
+        self.voice_manager = VoiceManager()
+        self.rag_manager = RAGManager()
+        self.analytics_manager = AnalyticsManager()
+        
+        # Load plugins
+        self.plugin_manager.load_plugins()
+        
         # Initialize advanced modules
         self.context_ai = ContextAwareAI() if ContextAwareAI else None
         self.analytics = AnalyticsMonitor() if AnalyticsMonitor else None
@@ -988,19 +1021,30 @@ class NexusAI:
             logging.error(f"Config save error: {str(e)}")
     
     def show_banner(self):
-        # Cool ASCII Banner (Aether AI)
-        banner_text = Text()
-        banner_text.append("\n")
-        banner_text.append("  ___   ______  _______  _______  _____    _____   _____ \n", style="bold cyan")
-        banner_text.append("     AAA   EEEEE  TTTTT  HHHH   EEEEE  RRRR   AAA   IIIII\n", style="bold yellow")
-        banner_text.append("    AAAAA  E      T     H   H  E      R   R AAAAA   I   \n", style="bold yellow")
-        banner_text.append("   A     A EEE    T     HHHHH  EEE    RRRR A     A  I   \n", style="bold yellow")
-        banner_text.append("   AAAAAAA E      T     H   H  E      R  R AAAAAAA  I   \n", style="bold yellow")
-        banner_text.append("   A     A EEEEE  T     H   H  EEEEE  R   R A     A IIIII\n", style="bold yellow")
-        banner_text.append(f"\n🤖 Aether AI Terminal v{VERSION}\n", style="bold green")
-        banner_text.append("⚡ Multi-Model • 🔒 Secure • 🚀 Enhanced\n", style="bold yellow")
+        # Modern, Clean Banner (No ASCII Art)
+        grid = Table.grid(expand=True)
+        grid.add_column(justify="center", ratio=1)
         
-        console.print(Panel(banner_text, border_style="bright_blue", padding=(1, 2)))
+        # Main Title - Big and Clear
+        grid.add_row(Text(" ", style="reset")) # Spacer
+        grid.add_row(Text("✨ AETHER AI ✨", style="bold cyan underline", justify="center"))
+        grid.add_row(Text(" ", style="reset")) # Spacer
+        
+        # Subtitle
+        grid.add_row(Text("Advanced Terminal Assistant", style="bold white italic", justify="center"))
+        grid.add_row(Text(" ", style="reset")) # Spacer
+        
+        # Meta info
+        grid.add_row(Text(f"v{VERSION} • {self.current_model.upper()} • Secure", style="dim white", justify="center"))
+        grid.add_row(Text(" ", style="reset")) # Spacer
+        
+        console.print(Panel(
+            grid,
+            border_style="bright_blue",
+            padding=(1, 2),
+            title="[bold green]Online[/bold green]",
+            title_align="right"
+        ))
         
         # Status Table
         table = Table(title="🔧 AI Services Status", show_header=True, header_style="bold magenta")
@@ -1255,6 +1299,51 @@ class NexusAI:
                 if not self.user_manager.is_admin():
                     return "Admin only."
                 return "Users: " + ", ".join(self.user_manager.list_users())
+            # --- New Features ---
+            if cmd == "voice on":
+                self.voice_manager.enabled = True
+                return "🎙️ Voice enabled"
+            if cmd == "voice off":
+                self.voice_manager.enabled = False
+                return "🔇 Voice disabled"
+            
+            if cmd.startswith("rag add "):
+                text = command[9:]
+                doc_id = f"doc_{int(time.time())}"
+                if self.rag_manager.add_document(doc_id, text):
+                    return f"✅ Added to knowledge base: {doc_id}"
+                return "❌ Failed to add document"
+            
+            if cmd == "plugins list":
+                plugins = self.plugin_manager.list_commands()
+                if not plugins:
+                    return "No plugins loaded."
+                return "\n".join([f"🔌 {name}: {desc}" for name, desc in plugins.items()])
+            
+            if cmd == "analytics stats":
+                stats = self.analytics_manager.get_stats()
+                if not stats:
+                    return "No analytics data."
+                return "\n".join([f"📊 {k}: {v}" for k, v in stats.items()])
+            
+            if cmd == "dashboard start":
+                try:
+                    from terminal.dashboard import start_dashboard
+                except ImportError:
+                    from dashboard import start_dashboard
+                start_dashboard()
+                return "📊 Dashboard launched in background."
+            
+            if cmd == "save-session":
+                if not self.user_manager.current_user:
+                    return "Not logged in."
+                hist = self.user_manager.get_history(self.user_manager.current_user)
+                messages = [{"role": "user", "content": m} for m in hist]
+                path = self.history_manager.save_session(self.user_manager.current_user, messages)
+                if path:
+                    return f"💾 Session saved to {path}"
+                return "❌ Failed to save session"
+
             # --- Chat History ---
             if cmd == "history":
                 if not self.user_manager.current_user:

@@ -148,3 +148,5 @@
 2025-10-20 11:10:16,078 - INFO - HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
 2025-10-20 11:10:24,122 - INFO - HTTP Request: POST http://127.0.0.1:11434/api/chat "HTTP/1.1 200 OK"
 2025-11-19 06:56:42,539 - CRITICAL - Fatal error: name 'version' is not defined
+2025-11-19 12:09:32,803 - ERROR - Analytics DB Init Error: file is not a database
+2025-11-19 12:11:53,647 - ERROR - Analytics DB Init Error: file is not a database
