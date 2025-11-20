@@ -174,8 +174,14 @@ def USER_DB_PATH() -> str:
     return os.path.join(_get_home_dir(), '.nexus', 'users.json')
 MAX_RETRIES = 3
 RATE_LIMIT_DELAY = 1.5
-VERSION = "3.0"
+VERSION = "3.1"
 REQUEST_TIMEOUT = 30
+
+# Enhanced Output Configuration
+MAX_OUTPUT_TOKENS = 4000  # Increased from 1000
+MAX_RESPONSE_LENGTH = 8000  # Increased from 2000
+MAX_INPUT_LENGTH = 4000  # Increased from 1000
+CONTEXT_HISTORY_SIZE = 10  # Number of previous messages to include
 
 # Security settings
 ALLOWED_DOMAINS = [
@@ -471,13 +477,13 @@ class AIManager:
             response = self.session.post(
                 "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
                 headers={"Authorization": f"Bearer {hf_token}"},
-                json={"inputs": prompt[:1000]}
+                json={"inputs": prompt[:MAX_INPUT_LENGTH]}
             )
             
             if response.status_code == 200:
                 result = response.json()
                 if isinstance(result, list) and result:
-                    return result[0].get("generated_text", "No response")[:2000]
+                    return result[0].get("generated_text", "No response")[:MAX_RESPONSE_LENGTH]
             
             return f" HuggingFace API Error: {response.status_code}"
         except Exception as e:
@@ -505,13 +511,13 @@ class AIManager:
                         clean_prompt,
                         generation_config=genai.types.GenerationConfig(
                             temperature=0.7,
-                            max_output_tokens=1000
+                            max_output_tokens=MAX_OUTPUT_TOKENS
                         )
                     )
                     
                     if not response or not hasattr(response, 'text') or not response.text:
                         raise APIError("Invalid Gemini response")
-                    result_text = response.text[:2000]
+                    result_text = response.text[:MAX_RESPONSE_LENGTH]
                     _prompt_cache.set(cache_key, result_text)
                     return result_text
                 
@@ -519,13 +525,13 @@ class AIManager:
                     response = self.groq.chat.completions.create(
                         messages=[{"role": "user", "content": clean_prompt}],
                         model="mixtral-8x7b-32768",
-                        max_tokens=1000
+                        max_tokens=MAX_OUTPUT_TOKENS
                     )
                     
                     if not response or not response.choices or not response.choices[0].message.content:
                         raise APIError("Invalid Groq response")
                     
-                    result_text = response.choices[0].message.content[:2000]
+                    result_text = response.choices[0].message.content[:MAX_RESPONSE_LENGTH]
                     _prompt_cache.set(cache_key, result_text)
                     return result_text
                 
@@ -561,7 +567,7 @@ class AIManager:
                         if not content:
                             raise APIError("Empty Ollama response")
                         
-                        result_text = content[:2000]
+                        result_text = content[:MAX_RESPONSE_LENGTH]
                         _prompt_cache.set(cache_key, result_text)
                         return result_text
                     except Exception as e:
@@ -578,11 +584,11 @@ class AIManager:
                     response = openai.ChatCompletion.create(
                         model="gpt-3.5-turbo",
                         messages=[{"role": "user", "content": clean_prompt}],
-                        max_tokens=1000
+                        max_tokens=MAX_OUTPUT_TOKENS
                     )
                     if not response or not response.choices or not response.choices[0].message.content:
                         raise APIError("Invalid ChatGPT response")
-                    result_text = response.choices[0].message.content[:2000]
+                    result_text = response.choices[0].message.content[:MAX_RESPONSE_LENGTH]
                     _prompt_cache.set(cache_key, result_text)
                     return result_text
                 
@@ -592,12 +598,12 @@ class AIManager:
                     if not mcp_key:
                         return " MCP API key not configured"
                     headers = {"Authorization": f"Bearer {mcp_key}", "Content-Type": "application/json"}
-                    data = {"prompt": clean_prompt, "max_tokens": 1000}
+                    data = {"prompt": clean_prompt, "max_tokens": MAX_OUTPUT_TOKENS}
                     try:
                         resp = self.session.post(mcp_url, headers=headers, json=data, timeout=REQUEST_TIMEOUT)
                         if resp.status_code == 200:
                             result = resp.json()
-                            result_text = result.get("text", "No response")[:2000]
+                            result_text = result.get("text", "No response")[:MAX_RESPONSE_LENGTH]
                             _prompt_cache.set(cache_key, result_text)
                             return result_text
                         return f" MCP API Error: {resp.status_code}"
