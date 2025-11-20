@@ -1,149 +1,51 @@
 # Unified AI Terminal Assistant Requirements
-# Merged from requirements.txt, requirements_v3.txt, and requirements_secure.txt
 
 # --- Core AI APIs ---
 google-generativeai==0.8.3
 groq==0.9.0
+openai==1.30.1
+ollama==0.3.1
 
-# Hugging Face Transformers (from v3)
+# --- RAG & Knowledge Base ---
+chromadb==1.1.1
+sentence-transformers==2.7.0
+PyPDF2==3.0.1
+beautifulsoup4==4.12.3
+
+# --- Interface (TUI & CLI) ---
+textual==0.70.0
+rich==13.7.1
+
+# --- Voice & Audio ---
+SpeechRecognition==3.10.0
+pyttsx3==2.90
+
+# --- System & Utilities ---
+docker==7.1.0
+schedule==1.2.2
+psutil==6.0.0
+python-dotenv==1.0.1
+pyyaml==6.0.1
+requests==2.32.3
+urllib3==2.2.2
+certifi==2024.6.2
+typing-extensions==4.12.2
+pydantic==2.7.4
+watchdog==4.0.1
+
+# --- Web Server ---
+fastapi==0.111.0
+uvicorn==0.30.1
+
+# --- Hugging Face (Optional/Heavy) ---
 transformers==4.41.2
 torch==2.6.0
 accelerate==0.30.1
 tokenizers==0.19.1
 
-# Ollama Python client (local processing - most secure)
-ollama==0.3.1
-
-# Environment variables
-python-dotenv==1.0.1
-
-# ChromaDB for memory/context (pin a stable, compatible version)
-# Note: ChromaDB has historically required a recent FastAPI; pin a compatible
-# FastAPI range rather than a single future-exact version to avoid conflicts
-# with other dependencies. Adjust as needed for your deployment.
-chromadb==1.1.1
-fastapi>=0.95.0,<1.0
-
-# Rich for beautiful console output (security-audited version)
-rich==13.7.1
-
-# Speech recognition (optional)
-SpeechRecognition==3.10.0
-# pyaudio>=0.2.11  # For microphone input (optional)
-
-# YAML configuration (secure parsing)
-PyYAML==6.0.1
-
-
-
-# System notifications (cross-platform, optional)
-plyer==2.1.0
-# notify2>=0.3.0  # Uncomment on Linux systems
-
-# HTTP requests with security features
-requests==2.32.3             # Latest with security patches
-urllib3==2.2.2               # Security-focused HTTP library
-certifi==2024.6.2            # Updated SSL certificates
-
-# Type hints support
-typing-extensions==4.12.2
-
-# Additional utilities
-pydantic==2.7.4              # Data validation with security features
-
-# --- New Advanced Features Dependencies ---
-
-# Interactive Development Environment
-jupyter==1.0.0               # Jupyter notebook support
-ipykernel==6.29.4            # IPython kernel for code execution
-jedi==0.19.1                 # Code completion and analysis
-black==24.4.2                # Code formatting
-flake8==7.0.0                # Code linting
-mypy==1.10.0                # Type checking
-# autopep8==2.3.1              # Code auto-formatting
-# NOTE: `autopep8==2.3.1` requires pycodestyle>=2.12.0 which conflicts with
-# `flake8==7.0.0` (flake8 pins pycodestyle<2.12.0,>=2.11.0). To avoid build-time
-# dependency conflicts in the container image, the formatting tool is commented
-# out here. Recommended approaches:
-#  - Move dev tooling (flake8, autopep8, mypy, black) into `requirements-dev.txt`
-#    and only install that file in development environments, or
-#  - Use a single formatting/linting stack compatible with the same pycodestyle
-#    range (choose matching versions), or
-#  - Install formatting tools on your host environment (outside Docker) where
-#    you control versions independently from the runtime image.
-
-# Testing & Quality Assurance
-pytest==8.2.2                # Testing framework
-pytest-cov==5.0.0            # Coverage reporting
-bandit==1.7.9                # Security linting
-safety==3.2.3                # Dependency vulnerability scanning
-radon==6.0.1                 # Code complexity analysis
-
-# Database Integration
-psycopg2-binary==2.9.9        # PostgreSQL connector
-pymongo==4.7.3               # MongoDB connector
-sqlalchemy==2.0.31           # SQL toolkit and ORM
-redis==5.0.7                 # Redis client
-
-# API Integration & Testing
-httpx==0.27.0                # Modern HTTP client
-uvicorn==0.30.1              # ASGI server
-requests-toolbelt==1.0.0     # HTTP utilities
-aiohttp==3.9.5               # Async HTTP client
-
-# Git Integration Enhancements
-gitpython==3.1.43            # Git operations
-gitdb==4.0.11                # Git database
-
-# Performance Profiling
-memory-profiler==0.61.0      # Memory profiling
-line-profiler==4.1.2         # Line-by-line profiling
-psutil==6.0.0                # System and process utilities
-
-# Code Analysis & AI Enhancement
-astroid==3.2.2               # AST analysis
-pylint==3.2.3                # Advanced linting
-rope==1.13.0                 # Refactoring library
-parso==0.8.4                 # Python parser
-
-# File System & Project Management
-pathlib2==2.3.7.post1         # Object-oriented filesystem paths
-watchdog==4.0.1              # File system monitoring
-pyyaml==6.0.1                # YAML processing (already included)
-
-# Data Visualization & Charts
-matplotlib==3.9.1            # Plotting library
-plotly==5.22.0               # Interactive charts
-seaborn==0.13.2              # Statistical visualization
-
-# Additional AI/ML Capabilities
-scikit-learn==1.5.1          # Machine learning
-pandas==2.2.2                # Data analysis
-numpy==1.26.4                # Numerical computing
-nltk==3.8.1                  # Natural language processing
-
-# Security-focused dependencies
-cryptography==42.0.8         # For secure operations
-idna==3.7                    # Internationalized domain names
-# Use a widely compatible passlib release and enable bcrypt extras
-passlib[bcrypt]==1.7.4       # Password hashing (bcrypt) - pinned for compatibility
-
-# Development and testing (commented out for production)
-# structlog==24.2.0          # Structured logging for security events
-# python-json-logger==2.0.7  # JSON logging for security analysis
-# pytest==8.2.2              # For security testing
-# pytest-security==0.1.0     # Security-focused tests
-# bandit==1.7.9              # Security linter
-# safety==3.2.3              # Dependency vulnerability scanner
-
-# Excluded for security reasons:
-# - No hardcoded API endpoints
-# - No unauthenticated services
-# - No deprecated packages
-# - No packages with known vulnerabilities
-
-# Security notes:
-# 1. All versions are pinned for reproducible builds
-# 2. Only packages from trusted sources
-# 3. Regular security updates required
-# 4. Vulnerability scanning recommended
+# --- Dev Tools ---
+pytest==8.2.2
+black==24.4.2
+flake8==7.0.0
+mypy==1.10.0
+scikit-learn==1.5.0

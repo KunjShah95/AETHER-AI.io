@@ -1,8 +1,9 @@
 import importlib
 import os
 import pkgutil
-import inspect
+import sys
 from typing import Dict, Any, Callable
+import logging
 
 class PluginManager:
     def __init__(self, plugin_dir: str = "plugins"):
@@ -17,16 +18,24 @@ class PluginManager:
 
     def load_plugins(self):
         """Discover and load plugins from the plugins directory."""
-        print(f"🔌 Loading plugins from {self.plugin_dir}...")
+        logging.info(f"🔌 Loading plugins from {self.plugin_dir}...")
         
         # Add plugin dir to path so we can import
-        import sys
         if self.plugin_dir not in sys.path:
             sys.path.append(self.plugin_dir)
 
+        # Clear existing to allow reload
+        self.commands.clear()
+        self.plugins.clear()
+
         for _, name, _ in pkgutil.iter_modules([self.plugin_dir]):
             try:
-                module = importlib.import_module(name)
+                # Reload if already loaded
+                if name in sys.modules:
+                    module = importlib.reload(sys.modules[name])
+                else:
+                    module = importlib.import_module(name)
+                
                 self.plugins[name] = module
                 
                 # Look for a 'register' function
@@ -34,12 +43,17 @@ class PluginManager:
                     new_commands = module.register()
                     if isinstance(new_commands, dict):
                         self.commands.update(new_commands)
-                        print(f"  ✅ Loaded plugin: {name} ({len(new_commands)} commands)")
+                        logging.info(f"  ✅ Loaded plugin: {name} ({len(new_commands)} commands)")
                 else:
-                    print(f"  ⚠️  Plugin {name} has no 'register' function")
+                    logging.warning(f"  ⚠️  Plugin {name} has no 'register' function")
                     
             except Exception as e:
-                print(f"  ❌ Failed to load plugin {name}: {e}")
+                logging.error(f"  ❌ Failed to load plugin {name}: {e}")
+
+    def reload_plugins(self):
+        """Hot-reload all plugins."""
+        self.load_plugins()
+        return f"Reloaded {len(self.plugins)} plugins."
 
     def get_command(self, command_name: str) -> Callable:
         return self.commands.get(command_name)

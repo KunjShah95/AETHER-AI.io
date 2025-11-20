@@ -150,3 +150,10 @@
 2025-11-19 06:56:42,539 - CRITICAL - Fatal error: name 'version' is not defined
 2025-11-19 12:09:32,803 - ERROR - Analytics DB Init Error: file is not a database
 2025-11-19 12:11:53,647 - ERROR - Analytics DB Init Error: file is not a database
+2025-11-19 12:18:54,670 - ERROR - Analytics DB Init Error: file is not a database
+2025-11-19 18:29:28,578 - ERROR - Analytics DB Init Error: file is not a database
+2025-11-20 06:58:51,409 - CRITICAL - Fatal error: name 'os' is not defined
+2025-11-20 06:59:15,157 - ERROR - Analytics DB Init Error: file is not a database
+2025-11-20 06:59:15,161 - WARNING - Docker available but not running/accessible: Error while fetching server API version: (2, 'CreateFile', 'The system cannot find the file specified.')
+2025-11-20 07:01:38,844 - ERROR - Analytics DB Init Error: file is not a database
+2025-11-20 07:01:38,845 - WARNING - Docker available but not running/accessible: Error while fetching server API version: (2, 'CreateFile', 'The system cannot find the file specified.')

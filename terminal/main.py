@@ -1,23 +1,3 @@
-#!/usr/bin/env python3
-import os
-import google.generativeai as genai
-from groq import Groq
-import ollama
-import subprocess
-# Use parser and CLI helper from diagnose_ollama as a robust fallback
-try:
-    from terminal.diagnose_ollama import parse_ollama_list_output, run_cli_list
-except Exception:
-    # If import fails, define simple fallbacks
-    def parse_ollama_list_output(text: str):
-        return []
-    def run_cli_list() -> str:
-        try:
-            cp = subprocess.run(['ollama', 'list'], capture_output=True, text=True, check=False)
-            return cp.stdout or cp.stderr or ''
-        except Exception:
-            return ''
-from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
@@ -33,10 +13,14 @@ import requests
 from typing import Dict, Optional
 import shlex
 import hashlib
+import os
 import json
 import threading
 import openai
+import ollama
+from dotenv import load_dotenv
 
+load_dotenv()
 # --- New Feature Imports ---
 try:
     from terminal.history import HistoryManager
@@ -61,27 +45,6 @@ except ImportError:
         class AnalyticsManager: log_usage = lambda *a: None
 
 # Optional advanced feature imports are loaded lazily to improve startup time.
-def _lazy_load_advanced_modules():
-    """Import heavy optional modules only when needed.
-    Returns a dict with module references or empty dict if unavailable.
-    """
-    modules = {}
-    try:
-        import psutil, platform, tempfile, cProfile, pstats, io
-        from pathlib import Path
-        modules.update({
-            "psutil": psutil,
-            "platform": platform,
-            "tempfile": tempfile,
-            "cProfile": cProfile,
-            "pstats": pstats,
-            "io": io,
-            "Path": Path,
-        })
-    except ImportError:
-        # Optional dependencies missing  continue without them.
-        pass
-    return modules
 
 # Import new advanced modules
 try:
@@ -94,6 +57,10 @@ try:
     from theme_manager import ThemeManager
     from integration_hub import IntegrationHub
     from code_review_assistant import CodeReviewAssistant
+    from terminal.docker_manager import DockerManager
+    from terminal.snippet_manager import SnippetManager
+    from terminal.persona_manager import PersonaManager
+    from terminal.network_tools import NetworkTools
 except ImportError:
     ContextAwareAI = None
     AnalyticsMonitor = None
@@ -104,72 +71,69 @@ except ImportError:
     ThemeManager = None
     CodeReviewAssistant = None
     IntegrationHub = None
+    DockerManager = None
+    SnippetManager = None
+    PersonaManager = None
+    NetworkTools = None
 
-AdvancedFeatures = None
 # Cache for Ollama model list to avoid repeated expensive calls.
 from functools import lru_cache
 @lru_cache(maxsize=1)
-def _cached_ollama_models():
-    """Retrieve Ollama models once per process run.
-    This reduces latency for repeated queries.
-    """
+def _get_ollama_models_list() -> list[str]:
+    """Retrieve Ollama models once per process run."""
+    models = []
+    # Try Python client first
     try:
-        # Avoid circular import by importing AIManager locally or re-implementing logic
-        # Since AIManager is defined below, we can't use it here directly if it's not defined yet.
-        # However, we can just use the raw logic or defer the call.
-        # Better approach: Use a standalone function that mimics the logic or just call the CLI/library directly.
+        res = ollama.list()
+        if hasattr(res, 'models'):
+            model_list = res.models
+        elif isinstance(res, dict) and res.get('models'):
+            model_list = res.get('models')
+        elif isinstance(res, list):
+            model_list = res
+        else:
+            model_list = []
         
-        # Try Python client first
-        try:
-            res = ollama.list()
-            models = []
-            if hasattr(res, 'models'):
-                model_list = res.models
-            elif isinstance(res, dict) and res.get('models'):
-                model_list = res.get('models')
-            elif isinstance(res, list):
-                model_list = res
+        for m in model_list:
+            if hasattr(m, 'model'):
+                name = m.model
+            elif hasattr(m, 'name'):
+                name = m.name
+            elif isinstance(m, dict):
+                name = m.get('name') or m.get('model') or str(m)
             else:
-                model_list = []
-            
-            for m in model_list:
-                if hasattr(m, 'model'):
-                    name = m.model
-                elif hasattr(m, 'name'):
-                    name = m.name
-                elif isinstance(m, dict):
-                    name = m.get('name') or m.get('model') or str(m)
-                else:
-                    name = str(m)
-                models.append(name)
-            
-            if models:
-                return ", ".join(models[:3]) + ("..." if len(models) > 3 else "")
-        except Exception:
-            pass
-
-        # Fallback to CLI
-        try:
-            raw = run_cli_list()
-            # We can't easily reuse parse_ollama_list_output here if it's defined below or imported.
-            # But wait, parse_ollama_list_output IS imported/defined at top.
-            parsed = parse_ollama_list_output(raw)
-            names = []
-            for r in parsed:
-                for k in r:
-                    if k.strip().upper() == 'NAME':
-                        val = r[k].strip()
-                        if val:
-                            names.append(val)
-                        break
-            if names:
-                return ", ".join(names[:3]) + ("..." if len(names) > 3 else "")
-        except Exception:
-            pass
-        
-        return "Unknown"
+                name = str(m)
+            models.append(name)
     except Exception:
-        return "Unknown"
+        pass
+
+    if models:
+        return models
+
+    # Fallback to CLI
+    try:
+        raw = run_cli_list()
+        parsed = parse_ollama_list_output(raw)
+        for r in parsed:
+            for k in r:
+                if k.strip().upper() == 'NAME':
+                    val = r[k].strip()
+                    if val:
+                        models.append(val)
+                    break
+        # Heuristic fallback
+        if not models and raw:
+             for line in raw.splitlines():
+                line = line.strip()
+                if not line or (line.upper().startswith('NAME') and 'SIZE' in line.upper()):
+                    continue
+                parts = line.split()
+                if parts:
+                    models.append(parts[0])
+    except Exception:
+        pass
+    
+    return models
 
 # --- Configuration ---
 load_dotenv()
@@ -230,31 +194,35 @@ class APIError(Exception):
 # --- Security Manager ---
 class SecurityManager:
     def __init__(self):
-        self.blocklist = [
-            r"sudo\s", r"rm\s+-[rf]", r"chmod\s+777",
-            r"wget\s", r"curl\s", r"\|\s*sh",
-            r">\s*/dev", r"nohup", r"fork\(\)",
-            r"eval\(", r"base64_decode", r"UNION\s+SELECT",
-            r"DROP\s+TABLE", r"<script", r"javascript:"
+        self.blocklist_patterns = [
+            re.compile(p, re.IGNORECASE) for p in [
+                r"sudo\s", r"rm\s+-[rf]", r"chmod\s+777",
+                r"wget\s", r"curl\s", r"\|\s*sh",
+                r">\s*/dev", r"nohup", r"fork\(\)",
+                r"eval\(", r"base64_decode", r"UNION\s+SELECT",
+                r"DROP\s+TABLE", r"<script", r"javascript:"
+            ]
         ]
         # Allowlist for commands and file extensions
-        self.allowed_commands = [
-            'ls', 'pwd', 'whoami', 'date', 'uptime', 'echo', 'cat', 'head', 'tail', 'df', 'du', 'free', 'uname', 'id'
-        ]
-        self.allowed_file_extensions = ['.txt', '.log', '.md', '.csv']
+        self.allowed_commands = {
+            'ls', 'pwd', 'whoami', 'date', 'uptime', 'echo', 'cat', 'head', 'tail', 'df', 'du', 'free', 'uname', 'id', 'git'
+        }
+        self.allowed_file_extensions = {'.txt', '.log', '.md', '.csv', '.json', '.py', '.js', '.html', '.css'}
         self.violation_count = 0
         self.violation_threshold = 5
 
         # Common prompt-injection phrases to detect when user-supplied content
         # will be sent to an LLM. These are conservative heuristics.
         self.prompt_injection_patterns = [
-            r"ignore (previous|all) instructions",
-            r"disregard (previous|earlier) instructions",
-            r"you are now",
-            r"from now on",
-            r"follow these instructions",
-            r"do not follow the",
-            r"respond only with",
+            re.compile(p, re.IGNORECASE) for p in [
+                r"ignore (previous|all) instructions",
+                r"disregard (previous|earlier) instructions",
+                r"you are now",
+                r"from now on",
+                r"follow these instructions",
+                r"do not follow the",
+                r"respond only with",
+            ]
         ]
 
     def sanitize(self, input_str: str) -> str:
@@ -267,10 +235,11 @@ class SecurityManager:
         if self.has_suspicious_unicode(input_str):
             self.log_violation('Suspicious unicode detected')
             raise SecurityError("Input contains suspicious unicode characters")
+        
         sanitized = input_str.strip().replace("\0", "")
-        for pattern in self.blocklist:
-            if re.search(pattern, sanitized, re.IGNORECASE):
-                self.log_violation(f'Blocked pattern: {pattern}')
+        for pattern in self.blocklist_patterns:
+            if pattern.search(sanitized):
+                self.log_violation(f'Blocked pattern detected')
                 raise SecurityError("Blocked dangerous pattern")
         return sanitized
 
@@ -318,14 +287,10 @@ class SecurityManager:
         try:
             if not isinstance(s, str):
                 return False
-            sl = s.lower()
-            for p in self.prompt_injection_patterns:
-                try:
-                    if re.search(p, sl):
-                        logging.warning(f"Prompt injection pattern detected: {p}")
-                        return True
-                except re.error:
-                    continue
+            for pattern in self.prompt_injection_patterns:
+                if pattern.search(s):
+                    logging.warning(f"Prompt injection pattern detected")
+                    return True
         except Exception:
             pass
         return False
@@ -480,112 +445,21 @@ class AIManager:
             self.status["mcp"] = " Invalid API key format"
     
     def _check_ollama(self) -> bool:
-        # Try Python client first
+        """Check if Ollama is running and has models."""
         try:
-            res = ollama.list()
-            # If structured response with models present, we're good
-            if isinstance(res, dict) and res.get('models'):
-                return True
-            # If client returned a non-empty string or list, consider it available
-            if res:
-                return True
-        except Exception:
-            pass
-
-        # Fall back to CLI: parse textual output for model table header or rows
-        try:
-            # Use cached model list function if available, otherwise direct call
-            try:
-                raw = _cached_ollama_models()
-                # If it returns a string description, we just check if it's not "Unknown"
-                if raw and raw != "Unknown":
-                    return True
-            except NameError:
-                pass
-            
-            raw = run_cli_list()
-            parsed = parse_ollama_list_output(raw)
-            return bool(parsed)
+            models = _get_ollama_models_list()
+            return bool(models)
         except Exception:
             return False
     
     def _get_ollama_models(self) -> str:
-        # Try structured python client result first
+        """Get a formatted string of available Ollama models."""
         try:
-            res = ollama.list()
-            models = []
-            
-            # Handle ListResponse object or dict
-            if hasattr(res, 'models'):
-                # It's a ListResponse object with .models attribute
-                model_list = res.models
-            elif isinstance(res, dict) and res.get('models'):
-                # It's a dict with 'models' key
-                model_list = res.get('models')
-            elif isinstance(res, list):
-                # It's already a list
-                model_list = res
-            else:
-                model_list = []
-            
-            for m in model_list:
-                # Handle Model objects (with attributes), dicts, or strings
-                if hasattr(m, 'model'):
-                    # It's a Model object with .model attribute
-                    name = m.model
-                elif hasattr(m, 'name'):
-                    # It's a Model object with .name attribute
-                    name = m.name
-                elif isinstance(m, dict):
-                    # It's a dict
-                    name = m.get('name') or m.get('model') or str(m)
-                else:
-                    # It's something else, convert to string
-                    name = str(m)
-                models.append(name)
-            
-            # If we have at least one model, format a short summary
+            models = _get_ollama_models_list()
             if models:
                 return ", ".join(models[:3]) + ("..." if len(models) > 3 else "")
         except Exception as e:
-            # Log the error for debugging
-            logging.warning(f"Error getting Ollama models from Python client: {str(e)}")
-            pass
-
-        # Fallback: call CLI and parse textual table
-        try:
-            raw = run_cli_list()
-            parsed = parse_ollama_list_output(raw)
-            names = []
-            for r in parsed:
-                # header keys may include 'NAME' or 'Name'
-                for k in r:
-                    if k.strip().upper() == 'NAME':
-                        val = r[k].strip()
-                        if val:
-                            names.append(val)
-                        break
-            if names:
-                return ", ".join(names[:3]) + ("..." if len(names) > 3 else "")
-            # If parsing produced rows but no name column, try splitting raw lines heuristically
-            for line in (raw or '').splitlines():
-                line = line.strip()
-                if not line:
-                    continue
-                # skip header-like lines
-                if line.upper().startswith('NAME') and 'SIZE' in line.upper():
-                    continue
-                # heuristically take first word as model name
-                parts = line.split()
-                if parts:
-                    names.append(parts[0])
-                    if len(names) >= 3:
-                        break
-            if names:
-                return ", ".join(names[:3]) + ("..." if len(names) > 3 else "")
-        except Exception:
-            pass
-
+            logging.warning(f"Error getting Ollama models: {str(e)}")
         return "Unknown"
     
     def _query_huggingface(self, prompt: str) -> str:
@@ -975,6 +849,10 @@ class NexusAI:
         self.theme_manager = ThemeManager() if ThemeManager else None
         self.code_reviewer = CodeReviewAssistant() if CodeReviewAssistant else None
         self.integration_hub = IntegrationHub() if IntegrationHub else None
+        self.docker_manager = DockerManager() if DockerManager else None
+        self.snippet_manager = SnippetManager() if SnippetManager else None
+        self.persona_manager = PersonaManager() if PersonaManager else None
+        self.network_tools = NetworkTools() if NetworkTools else None
         
         # Update console theme if theme manager is available
         if self.theme_manager:
@@ -1260,7 +1138,10 @@ class NexusAI:
                     return self.ai.query(self.current_model, f"Translate: {clean_input[10:]}")
                 if clean_input.startswith("explain "):
                     return self.ai.query(self.current_model, f"Explain: {clean_input[8:]}")
-            return self.ai.query(self.current_model, clean_input)
+            response = self.ai.query(self.current_model, clean_input)
+            if self.voice_manager.enabled:
+                self.voice_manager.speak(response)
+            return response
         except SecurityError:
             # Track security errors
             if self.analytics:
@@ -1307,6 +1188,14 @@ class NexusAI:
                 self.voice_manager.enabled = False
                 return "🔇 Voice disabled"
             
+            if cmd == "listen":
+                if not self.voice_manager.is_available():
+                    return "❌ Voice features not available (check requirements)"
+                text = self.voice_manager.listen()
+                if text:
+                    return self.process_input(text)
+                return "❌ Could not hear anything."
+            
             if cmd.startswith("rag add "):
                 text = command[9:]
                 doc_id = f"doc_{int(time.time())}"
@@ -1328,11 +1217,86 @@ class NexusAI:
             
             if cmd == "dashboard start":
                 try:
-                    from terminal.dashboard import start_dashboard
-                except ImportError:
-                    from dashboard import start_dashboard
-                start_dashboard()
-                return "📊 Dashboard launched in background."
+                    from terminal.dashboard_tui import NexusDashboard
+                    app = NexusDashboard()
+                    _run_in_background(app.run)
+                    return "📊 Dashboard launched."
+                except Exception as e:
+                    return f"❌ Failed to launch dashboard: {e}"
+
+            if cmd == "admin start":
+                try:
+                    from terminal.web_admin import start_server
+                    _run_in_background(start_server)
+                    return "🌐 Web Admin started at http://localhost:8000"
+                except Exception as e:
+                    return f"❌ Failed to start admin: {e}"
+
+            if cmd.startswith("docker "):
+                if not self.docker_manager or not self.docker_manager.enabled:
+                    return "❌ Docker integration not available."
+                sub = cmd[7:].strip()
+                if sub == "list":
+                    containers = self.docker_manager.list_containers()
+                    if not containers: return "No containers found."
+                    return "\n".join([f"🐳 {c['name']} ({c['status']}) - {c['image']}" for c in containers])
+                if sub.startswith("start "):
+                    return self.docker_manager.start_container(sub[6:])
+                if sub.startswith("stop "):
+                    return self.docker_manager.stop_container(sub[5:])
+                if sub.startswith("logs "):
+                    return self.docker_manager.get_logs(sub[5:])
+                return "Usage: /docker [list|start <id>|stop <id>|logs <id>]"
+
+            if cmd.startswith("persona "):
+                if not self.persona_manager:
+                    return "❌ Persona manager not available."
+                parts = cmd.split(maxsplit=2)
+                action = parts[1] if len(parts) > 1 else "list"
+                if action == "list":
+                    return self.persona_manager.list_personas()
+                if action == "set" and len(parts) == 3:
+                    return self.persona_manager.set_persona(parts[2])
+                if action == "create" and len(parts) == 3:
+                    # Interactive prompt creation could go here, but for now simple usage
+                    return "Usage: /persona create <name> (prompt must be added manually in code for now or via file)"
+                return "Usage: /persona [list|set <name>]"
+
+            if cmd.startswith("net "):
+                if not self.network_tools:
+                    return "❌ Network tools not available."
+                sub = cmd[4:].strip()
+                if sub == "ip":
+                    return self.network_tools.get_local_ip()
+                if sub.startswith("ping "):
+                    return self.network_tools.ping(sub[5:])
+                if sub.startswith("scan "):
+                    target = sub[5:] or "localhost"
+                    return self.network_tools.scan_common_ports(target)
+                return "Usage: /net [ip|ping <host>|scan <host>]"
+
+            if cmd.startswith("snippet "):
+                if not self.snippet_manager:
+                    return "❌ Snippet manager not available."
+                parts = cmd.split(maxsplit=2)
+                action = parts[1] if len(parts) > 1 else "list"
+                if action == "list":
+                    return self.snippet_manager.list_snippets()
+                if action == "save" and len(parts) == 3:
+                    # Save last history item as snippet
+                    hist = self.user_manager.get_history(self.user_manager.current_user)
+                    if not hist: return "No history to save."
+                    return self.snippet_manager.save_snippet(parts[2], hist[-1])
+                if action == "get" and len(parts) == 3:
+                    return self.snippet_manager.get_snippet(parts[2]) or "Snippet not found."
+                return "Usage: /snippet [list|save <name>|get <name>]"
+
+            if cmd.startswith("rag ingest "):
+                target = cmd[11:].strip()
+                if target.startswith("http"):
+                    return self.rag_manager.ingest_url(target)
+                else:
+                    return self.rag_manager.ingest_file(target)
             
             if cmd == "save-session":
                 if not self.user_manager.current_user:
