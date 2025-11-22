@@ -1,92 +1,111 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Terminal as TerminalIcon, Maximize2, Minus, X } from 'lucide-react';
 
-const commands = [
-    'nexus --help',
-    'nexus chat "Hello, how are you?"',
-    'nexus model --list',
-    'nexus config --set model=gemini',
-    'nexus generate --prompt "Write a Python function"'
-];
-
-const responses = [
-    'NEXUS AI Terminal v3.0\nUsage: nexus [command] [options]\n\nCommands:\n  chat      Start interactive chat\n  generate  Generate content\n  model     Manage AI models\n  config    Configuration settings',
-    'AI: Hello! I\'m doing great, thank you for asking! How can I assist you today?',
-    'Available Models:\n✓ Gemini Pro\n✓ Groq Llama\n✓ HuggingFace Transformers\n✓ DeepSeek Coder\n✓ Ollama Local\n✓ Claude Sonnet\n✓ GPT-4\n✓ Mistral AI',
-    'Configuration updated successfully!\nActive model: Gemini Pro\nStatus: Ready',
-    'def fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)\n\n# Generated with NEXUS AI'
+const COMMANDS = [
+    { cmd: 'nexus init', output: 'Initializing Nexus AI environment...' },
+    { cmd: 'nexus connect --model=llama-3', output: 'Connected to local Llama 3 instance. Ready.' },
+    { cmd: 'nexus analyze src/App.tsx', output: 'Analyzing App.tsx...\nFound 2 potential optimizations.\nSecurity check passed.' },
+    { cmd: 'nexus chat "How do I optimize this?"', output: 'To optimize this component, consider memoizing the callback functions...' },
 ];
 
 export function Terminal() {
-    const [text, setText] = useState('');
-    const [output, setOutput] = useState<Array<{ command: string, response: string }>>([]);
-    const [cmdIndex, setCmdIndex] = useState(0);
-    const [charIndex, setCharIndex] = useState(0);
+    const [lines, setLines] = useState<Array<{ type: 'cmd' | 'output', text: string }>>([]);
+    const [currentCommandIndex, setCurrentCommandIndex] = useState(0);
+    const [currentText, setCurrentText] = useState('');
     const [isTyping, setIsTyping] = useState(true);
-    const [showCursor, setShowCursor] = useState(true);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const cursorInterval = setInterval(() => setShowCursor(prev => !prev), 500);
-        return () => clearInterval(cursorInterval);
-    }, []);
+        if (currentCommandIndex >= COMMANDS.length) {
+            // Reset after a delay
+            const timeout = setTimeout(() => {
+                setLines([]);
+                setCurrentCommandIndex(0);
+                setCurrentText('');
+                setIsTyping(true);
+            }, 5000);
+            return () => clearTimeout(timeout);
+        }
+
+        const command = COMMANDS[currentCommandIndex];
+
+        if (isTyping) {
+            if (currentText.length < command.cmd.length) {
+                const timeout = setTimeout(() => {
+                    setCurrentText(command.cmd.slice(0, currentText.length + 1));
+                }, 50 + Math.random() * 50);
+                return () => clearTimeout(timeout);
+            } else {
+                // Finished typing command
+                setIsTyping(false);
+                setTimeout(() => {
+                    setLines(prev => [...prev, { type: 'cmd', text: command.cmd }]);
+                    setCurrentText('');
+                    // Show output after a small delay
+                    setTimeout(() => {
+                        setLines(prev => [...prev, { type: 'output', text: command.output }]);
+                        setCurrentCommandIndex(prev => prev + 1);
+                        setIsTyping(true);
+                    }, 500);
+                }, 300);
+            }
+        }
+    }, [currentText, currentCommandIndex, isTyping]);
 
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [output, text]);
-
-    useEffect(() => {
-        if (!isTyping) return;
-
-        if (charIndex < commands[cmdIndex].length) {
-            const timeout = setTimeout(() => {
-                setText(prev => prev + commands[cmdIndex][charIndex]);
-                setCharIndex(prev => prev + 1);
-            }, 50 + Math.random() * 50);
-            return () => clearTimeout(timeout);
-        } else {
-            // Finished typing command
-            setIsTyping(false);
-            setTimeout(() => {
-                setOutput(prev => [...prev, { command: commands[cmdIndex], response: responses[cmdIndex] }]);
-                setText('');
-                setCharIndex(0);
-                setCmdIndex(prev => (prev + 1) % commands.length);
-                setIsTyping(true);
-            }, 1000);
-        }
-    }, [charIndex, cmdIndex, isTyping]);
+    }, [lines, currentText]);
 
     return (
-        <div className="w-full max-w-lg mx-auto relative z-20">
-            <div className="terminal-mockup shadow-2xl rounded-2xl border border-indigo-400/30 bg-[#1e293b]/90 backdrop-blur overflow-hidden transform transition-all hover:scale-[1.02] duration-500">
-                <div className="flex items-center gap-3 px-4 py-2 border-b border-indigo-400/20 bg-[#1e293b]">
-                    <div className="flex gap-2">
-                        <span className="w-3 h-3 bg-red-400 rounded-full"></span>
-                        <span className="w-3 h-3 bg-yellow-400 rounded-full"></span>
-                        <span className="w-3 h-3 bg-green-400 rounded-full"></span>
-                    </div>
-                    <div className="text-xs text-slate-400 font-mono">AetherAI Terminal</div>
+        <div className="w-full rounded-xl overflow-hidden bg-[#1e1e1e] border border-neutral-800 shadow-2xl font-mono text-sm h-[300px] flex flex-col">
+            {/* Title Bar */}
+            <div className="bg-[#2d2d2d] px-4 py-2 flex items-center justify-between border-b border-neutral-700">
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
                 </div>
-                <div ref={scrollRef} className="px-6 py-6 font-mono h-[350px] overflow-y-auto text-slate-200 text-sm scrollbar-thin scrollbar-thumb-indigo-500/20 scrollbar-track-transparent">
-                    {output.map((item, i) => (
-                        <div key={i} className="mb-4">
-                            <div className="flex items-center gap-2 text-cyan-400">
-                                <span>aether@ai:~$</span>
-                                <span className="text-white">{item.command}</span>
-                            </div>
-                            <div className="mt-1 text-slate-400 whitespace-pre-wrap pl-4 border-l-2 border-slate-700 ml-1">
-                                {item.response}
-                            </div>
-                        </div>
-                    ))}
-                    <div className="flex items-center gap-2">
-                        <span className="text-cyan-400 font-bold">aether@ai:~$</span>
-                        <span>{text}</span>
-                        <span className={`w-2 h-5 bg-cyan-400 ${showCursor ? 'opacity-100' : 'opacity-0'}`}></span>
-                    </div>
+                <div className="text-neutral-400 text-xs flex items-center gap-2">
+                    <TerminalIcon className="w-3 h-3" />
+                    <span>nexus-cli — 80x24</span>
                 </div>
+                <div className="flex items-center gap-2 text-neutral-500">
+                    <Minus className="w-3 h-3" />
+                    <Maximize2 className="w-3 h-3" />
+                    <X className="w-3 h-3" />
+                </div>
+            </div>
+
+            {/* Content */}
+            <div ref={scrollRef} className="p-4 text-neutral-300 flex-1 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-neutral-700">
+                <div className="text-neutral-500 mb-4">Welcome to Nexus AI CLI v2.0.0</div>
+
+                {lines.map((line, idx) => (
+                    <div key={idx} className={`${line.type === 'cmd' ? 'text-white' : 'text-neutral-400 whitespace-pre-wrap'}`}>
+                        {line.type === 'cmd' && <span className="text-green-500 mr-2">➜</span>}
+                        {line.type === 'cmd' && <span className="text-cyan-500 mr-2">~</span>}
+                        {line.text}
+                    </div>
+                ))}
+
+                {isTyping && (
+                    <div className="text-white">
+                        <span className="text-green-500 mr-2">➜</span>
+                        <span className="text-cyan-500 mr-2">~</span>
+                        {currentText}
+                        <span className="animate-pulse inline-block w-2 h-4 bg-white ml-1 align-middle"></span>
+                    </div>
+                )}
+
+                {!isTyping && currentCommandIndex < COMMANDS.length && (
+                    <div className="text-white">
+                        <span className="text-green-500 mr-2">➜</span>
+                        <span className="text-cyan-500 mr-2">~</span>
+                        <span className="animate-pulse inline-block w-2 h-4 bg-white ml-1 align-middle"></span>
+                    </div>
+                )}
             </div>
         </div>
     );

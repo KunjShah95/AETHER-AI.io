@@ -1,10 +1,11 @@
-import defaultTheme from "tailwindcss/defaultTheme";
-import colors from "tailwindcss/colors";
-import flattenColorPalette from "tailwindcss/lib/util/flattenColorPalette";
-import tailwindAnimate from "tailwindcss-animate";
+const defaultTheme = require("tailwindcss/defaultTheme");
+const colors = require("tailwindcss/colors");
+const {
+    default: flattenColorPalette,
+} = require("tailwindcss/lib/util/flattenColorPalette");
 
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
     content: ["./src/**/*.{ts,tsx}"],
     darkMode: "class",
     theme: {
@@ -43,6 +44,12 @@ export default {
                 border: "var(--border)",
                 input: "var(--input)",
                 ring: "var(--ring)",
+                // Custom technical palette
+                terminal: {
+                    green: "#00ff41",
+                    cyan: "#00d9ff",
+                    amber: "#ffb000",
+                },
             },
             animation: {
                 spotlight: "spotlight 2s ease .75s 1 forwards",
@@ -89,7 +96,7 @@ export default {
         },
     },
     plugins: [
-        tailwindAnimate,
+        require("tailwindcss-animate"),
         addVariablesForColors,
     ],
 };
