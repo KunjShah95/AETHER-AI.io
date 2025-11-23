@@ -65,6 +65,11 @@ try:
     from terminal.network_tools import NetworkTools
     from terminal.games_tui import GamesTUI
     from terminal.dashboard_tui import NexusDashboard
+    from terminal.api_client import APIClient
+    from terminal.database_manager import DatabaseManager
+    from terminal.package_manager_integration import PackageManager
+    from terminal.test_runner import TestRunner
+    from terminal.file_watcher import FileWatcher
 except ImportError:
     try:
         from context_aware_ai import ContextAwareAI
@@ -82,6 +87,11 @@ except ImportError:
         from network_tools import NetworkTools
         from games_tui import GamesTUI
         from dashboard_tui import NexusDashboard
+        from api_client import APIClient
+        from database_manager import DatabaseManager
+        from package_manager_integration import PackageManager
+        from test_runner import TestRunner
+        from file_watcher import FileWatcher
     except ImportError:
         ContextAwareAI = None
         AnalyticsMonitor = None
@@ -98,6 +108,11 @@ except ImportError:
         NetworkTools = None
         GamesTUI = None
         NexusDashboard = None
+        APIClient = None
+        DatabaseManager = None
+        PackageManager = None
+        TestRunner = None
+        FileWatcher = None
 
 # Cache for Ollama model list to avoid repeated expensive calls.
 from functools import lru_cache
@@ -3435,8 +3450,42 @@ class NexusAI:
             logging.error(f"Command handling error: {str(e)}")
             return " Command processing error"
 # --- Main Loop ---
+def run_cli_mode() -> int:
+    """Run in headless CLI mode for VS Code extension."""
+    try:
+        nexus = NexusAI(quiet=True)
+        # Signal that we are ready (extension looks for "Assistant starting…")
+        # But the extension logs whatever we print.
+        # The extension sends commands via stdin and logs stdout.
+        
+        while True:
+            try:
+                line = sys.stdin.readline()
+                if not line:
+                    break
+                line = line.strip()
+                if not line:
+                    continue
+                
+                # Process input
+                response = nexus.process_input(line)
+                print(response)
+                sys.stdout.flush()
+            except KeyboardInterrupt:
+                break
+            except Exception as e:
+                print(f"Error: {e}")
+                sys.stdout.flush()
+        return 0
+    except Exception as e:
+        print(f"Fatal CLI error: {e}")
+        return 1
+
 def main() -> int:
     """Start the interactive Aether AI terminal. Returns exit code."""
+    if "--cli" in sys.argv:
+        return run_cli_mode()
+
     try:
         # Import and run the TUI application
         from terminal.tui_app import NexusTUI

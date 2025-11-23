@@ -1,9 +1,7 @@
 import React from "react";
 import { Spotlight } from "@/components/ui/Spotlight";
 import { Button } from "@/components/ui/MovingBorder";
-import { TextGenerateEffect } from "@/components/ui/TextGenerateEffect";
-import { Download, Play, ArrowRight } from "lucide-react";
-import { Terminal } from "./Terminal";
+import { Play, ArrowRight } from "lucide-react";
 
 export function Hero() {
     return (
@@ -65,8 +63,8 @@ export function Hero() {
                     <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-purple-500/20 group">
                         <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <img
-                            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2670&auto=format&fit=crop"
-                            alt="NEXUS-AI Dashboard"
+                            src="/nexus_ai_dashboard.svg"
+                            alt="NEXUS-AI Dashboard - Interactive Terminal with Neural Network Visualization"
                             className="w-full h-auto object-cover transform transition-transform duration-700 hover:scale-105"
                         />
                         {/* Overlay for better text contrast if needed, or just aesthetic sheen */}

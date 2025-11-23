@@ -49,3 +49,18 @@ black==24.4.2
 flake8==7.0.0
 mypy==1.10.0
 scikit-learn==1.5.0
+
+# --- HIGH-PRIORITY FEATURES ---
+# Database Management (Optional - install as needed)
+psycopg2-binary==2.9.9  # PostgreSQL
+mysql-connector-python==8.2.0  # MySQL
+pymongo==4.6.1  # MongoDB
+
+# Testing Tools
+pytest-cov==4.1.0  # Coverage reporting
+pytest-xdist==3.5.0  # Parallel testing
+pytest-html==4.1.1  # HTML test reports
+
+# Package Manager Tools
+pip-audit==2.6.3  # Security auditing for pip
+

@@ -1,0 +1,70 @@
+{
+  "name": "nexus-ai-terminal-extension",
+  "displayName": "Nexus AI Terminal Assistant",
+  "description": "Surface the Nexus AI terminal assistant inside VS Code with quick models, utilities, and contextual controls.",
+  "version": "0.1.0",
+  "publisher": "kunjshah95",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "main": "./dist/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "test": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.3",
+    "@types/vscode": "^1.86.0",
+    "typescript": "^5.2.2"
+  },
+  "files": [
+    "dist/**",
+    "media/**"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "nexusAi.startAssistant",
+        "title": "Nexus AI: Start Assistant",
+        "category": "Nexus AI"
+      },
+      {
+        "command": "nexusAi.stopAssistant",
+        "title": "Nexus AI: Stop Assistant",
+        "category": "Nexus AI"
+      },
+      {
+        "command": "nexusAi.sendQuickCommand",
+        "title": "Nexus AI: Run Quick Command",
+        "category": "Nexus AI"
+      },
+      {
+        "command": "nexusAi.openAssistantPanel",
+        "title": "Nexus AI: Open Assistant Panel",
+        "category": "Nexus AI"
+      }
+    ],
+    "configuration": {
+      "title": "Nexus AI Terminal Assistant",
+      "properties": {
+        "nexusAiAssistant.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Path to the Python interpreter used to launch the terminal assistant."  
+        },
+        "nexusAiAssistant.preferredModel": {
+          "type": "string",
+          "default": "gpt-5.1-codex-mini",
+          "description": "Preferred model that the assistant should advertise when multiple backends are available."
+        },
+        "nexusAiAssistant.autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically start the assistant when the workspace opens."
+        }
+      }
+    }
+  }
+}
