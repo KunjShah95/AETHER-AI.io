@@ -44,14 +44,14 @@ class ThemeManager:
                     "highlight": "#333333"
                 },
                 "icons": {
-                    "success": "✅",
-                    "error": "❌",
-                    "warning": "⚠️",
-                    "info": "ℹ️",
-                    "loading": "⏳",
-                    "complete": "✅",
-                    "arrow": "➤",
-                    "bullet": "•"
+                    "success": "[OK]",
+                    "error": "[ERR]",
+                    "warning": "[!]",
+                    "info": "[i]",
+                    "loading": "...",
+                    "complete": "[DONE]",
+                    "arrow": ">",
+                    "bullet": "*"
                 }
             },
             "light": {
@@ -73,14 +73,14 @@ class ThemeManager:
                     "highlight": "#eeeeee"
                 },
                 "icons": {
-                    "success": "✅",
-                    "error": "❌",
-                    "warning": "⚠️",
-                    "info": "ℹ️",
-                    "loading": "⏳",
-                    "complete": "✅",
-                    "arrow": "➤",
-                    "bullet": "•"
+                    "success": "[OK]",
+                    "error": "[ERR]",
+                    "warning": "[!]",
+                    "info": "[i]",
+                    "loading": "...",
+                    "complete": "[DONE]",
+                    "arrow": ">",
+                    "bullet": "*"
                 }
             },
             "neon": {
@@ -102,14 +102,14 @@ class ThemeManager:
                     "highlight": "#2a2a2a"
                 },
                 "icons": {
-                    "success": "💚",
-                    "error": "💔",
-                    "warning": "⚡",
-                    "info": "🔵",
-                    "loading": "🌟",
-                    "complete": "✨",
-                    "arrow": "▶",
-                    "bullet": "◆"
+                    "success": "[OK]",
+                    "error": "[ERR]",
+                    "warning": "[!]",
+                    "info": "[i]",
+                    "loading": "...",
+                    "complete": "[DONE]",
+                    "arrow": ">",
+                    "bullet": "*"
                 }
             },
             "ocean": {
@@ -131,14 +131,14 @@ class ThemeManager:
                     "highlight": "#f1f8e9"
                 },
                 "icons": {
-                    "success": "🌊",
-                    "error": "🌋",
-                    "warning": "🌤️",
-                    "info": "💧",
-                    "loading": "🌊",
-                    "complete": "🏄",
-                    "arrow": "➤",
-                    "bullet": "○"
+                    "success": "[OK]",
+                    "error": "[ERR]",
+                    "warning": "[!]",
+                    "info": "[i]",
+                    "loading": "...",
+                    "complete": "[DONE]",
+                    "arrow": ">",
+                    "bullet": "*"
                 }
             },
             "forest": {
@@ -160,14 +160,14 @@ class ThemeManager:
                     "highlight": "#e8f5e8"
                 },
                 "icons": {
-                    "success": "🌿",
-                    "error": "🍂",
-                    "warning": "🌳",
-                    "info": "🌱",
-                    "loading": "🌲",
-                    "complete": "🌳",
-                    "arrow": "➤",
-                    "bullet": "●"
+                    "success": "[OK]",
+                    "error": "[ERR]",
+                    "warning": "[!]",
+                    "info": "[i]",
+                    "loading": "...",
+                    "complete": "[DONE]",
+                    "arrow": ">",
+                    "bullet": "*"
                 }
             },
             "sunset": {
@@ -189,14 +189,14 @@ class ThemeManager:
                     "highlight": "#ffe0b2"
                 },
                 "icons": {
-                    "success": "🌅",
-                    "error": "🌋",
-                    "warning": "🌇",
-                    "info": "🌞",
-                    "loading": "🌄",
-                    "complete": "🌅",
-                    "arrow": "➤",
-                    "bullet": "●"
+                    "success": "[OK]",
+                    "error": "[ERR]",
+                    "warning": "[!]",
+                    "info": "[i]",
+                    "loading": "...",
+                    "complete": "[DONE]",
+                    "arrow": ">",
+                    "bullet": "*"
                 }
             },
             "matrix": {
@@ -276,8 +276,8 @@ class ThemeManager:
             with open(self.themes_file, 'w') as f:
                 json.dump(custom_themes, f, indent=2)
         except Exception as e:
-            return f"❌ Error saving custom themes: {e}"
-        return "✅ Custom themes saved successfully"
+            return f" Error saving custom themes: {e}"
+        return " Custom themes saved successfully"
 
     def get_theme(self, theme_name: str) -> Optional[Dict]:
         """Get a theme by name"""
@@ -287,9 +287,9 @@ class ThemeManager:
         """Set the current active theme"""
         if theme_name in self.themes:
             self.current_theme = theme_name
-            return f"✅ Theme switched to: {self.themes[theme_name]['name']}"
+            return f" Theme switched to: {self.themes[theme_name]['name']}"
         else:
-            return f"❌ Theme '{theme_name}' not found. Available themes: {', '.join(self.themes.keys())}"
+            return f" Theme '{theme_name}' not found. Available themes: {', '.join(self.themes.keys())}"
 
     def get_current_theme(self) -> Dict:
         """Get the current active theme"""
@@ -297,7 +297,7 @@ class ThemeManager:
 
     def list_themes(self) -> str:
         """List all available themes"""
-        output = "🎨 Available Themes:\n\n"
+        output = " Available Themes:\n\n"
         for name, theme in self.themes.items():
             current_marker = " ← Current" if name == self.current_theme else ""
             output += f"• {name}: {theme['name']} - {theme['description']}{current_marker}\n"
@@ -306,10 +306,10 @@ class ThemeManager:
     def create_custom_theme(self, name: str, base_theme: str = "dark", **customizations) -> str:
         """Create a custom theme based on an existing theme"""
         if base_theme not in self.themes:
-            return f"❌ Base theme '{base_theme}' not found"
+            return f" Base theme '{base_theme}' not found"
 
         if name in self.themes:
-            return f"❌ Theme '{name}' already exists"
+            return f" Theme '{name}' already exists"
 
         # Create new theme based on base theme
         new_theme = self.themes[base_theme].copy()
@@ -324,19 +324,19 @@ class ThemeManager:
 
         self.themes[name] = new_theme
         self._save_custom_themes()
-        return f"✅ Custom theme '{name}' created successfully"
+        return f" Custom theme '{name}' created successfully"
 
     def delete_custom_theme(self, name: str) -> str:
         """Delete a custom theme"""
         if name not in self.themes:
-            return f"❌ Theme '{name}' not found"
+            return f" Theme '{name}' not found"
 
         if name in self._load_default_themes():
-            return f"❌ Cannot delete built-in theme '{name}'"
+            return f" Cannot delete built-in theme '{name}'"
 
         del self.themes[name]
         self._save_custom_themes()
-        return f"✅ Custom theme '{name}' deleted successfully"
+        return f" Custom theme '{name}' deleted successfully"
 
     def get_rich_theme(self) -> Theme:
         """Get Rich theme object for current theme"""
@@ -369,7 +369,7 @@ class ThemeManager:
         icons = theme["icons"]
 
         preview = f"""
-🎨 Theme Preview: {theme['name']}
+ Theme Preview: {theme['name']}
 {theme['description']}
 
 Colors:
@@ -407,7 +407,7 @@ Icons:
 THEME_{theme_name.upper()} = {json.dumps(theme, indent=4)}
 """
         else:
-            return f"❌ Unsupported export format: {format_type}. Use 'json' or 'python'"
+            return f" Unsupported export format: {format_type}. Use 'json' or 'python'"
 
     def get_theme_stats(self) -> str:
         """Get statistics about themes"""
@@ -416,7 +416,7 @@ THEME_{theme_name.upper()} = {json.dumps(theme, indent=4)}
         custom_themes = total_themes - default_themes
 
         stats = f"""
-📊 Theme Statistics:
+ Theme Statistics:
 • Total Themes: {total_themes}
 • Built-in Themes: {default_themes}
 • Custom Themes: {custom_themes}
@@ -427,7 +427,7 @@ THEME_{theme_name.upper()} = {json.dumps(theme, indent=4)}
     def reset_to_default(self) -> str:
         """Reset to default dark theme"""
         self.current_theme = "dark"
-        return "✅ Reset to default Dark Professional theme"
+        return " Reset to default Dark Professional theme"
 
     def get_startup_animation(self) -> List[str]:
         """Get frames for startup animation"""

@@ -18,14 +18,14 @@ class GamesTUI:
         while True:
             self.console.clear()
             self.console.print(Panel.fit(
-                "[bold cyan]🎮 NEXUS AI Games & Learning[/bold cyan]\n\n"
-                "1. 🐍 Python Basics Challenge\n"
-                "2. 🧩 Algorithm Puzzles\n"
-                "3. 🌐 Web Development Challenge\n"
-                "4. 📚 Tutorials\n"
-                "5. ❓ Python Quiz\n"
-                "6. 🏆 My Stats\n"
-                "0. 🔙 Back to Main Menu",
+                "[bold cyan] NEXUS AI Games & Learning[/bold cyan]\n\n"
+                "1. Python Basics Challenge\n"
+                "2. Algorithm Puzzles\n"
+                "3. Web Development Challenge\n"
+                "4. Tutorials\n"
+                "5. Python Quiz\n"
+                "6. My Stats\n"
+                "0. Back to Main Menu",
                 title="Game Menu",
                 border_style="cyan"
             ))
@@ -99,7 +99,7 @@ class GamesTUI:
                     score_color = "green" if result['score'] == 100 else "yellow"
                     self.console.print(f"\n[{score_color}]Score: {result['score']}%[/{score_color}]")
                     if result['achievements']:
-                        self.console.print(f"\n[bold gold1]🏆 Achievements Unlocked: {', '.join(result['achievements'])}[/bold gold1]")
+                        self.console.print(f"\n[bold gold1] Achievements Unlocked: {', '.join(result['achievements'])}[/bold gold1]")
                     
                     Prompt.ask("\nPress Enter to continue")
                     break

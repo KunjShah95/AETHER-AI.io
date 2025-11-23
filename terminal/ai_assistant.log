@@ -121,3 +121,18 @@
 2025-11-20 14:25:57,784 - WARNING - Docker available but not running/accessible: Error while fetching server API version: (2, 'CreateFile', 'The system cannot find the file specified.')
 2025-11-20 14:33:16,986 - ERROR - Analytics DB Init Error: file is not a database
 2025-11-20 14:33:16,989 - WARNING - Docker available but not running/accessible: Error while fetching server API version: (2, 'CreateFile', 'The system cannot find the file specified.')
+2025-11-23 06:58:21,648 - ERROR - Analytics DB Init Error: file is not a database
+2025-11-23 06:58:26,501 - INFO - Backing off send_request(...) for 0.1s (requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='us.i.posthog.com', port=443): Read timed out. (read timeout=15))
+2025-11-23 06:58:39,306 - ERROR - Command handling error: cannot access local variable 'NexusDashboard' where it is not associated with a value
+2025-11-23 07:05:26,243 - ERROR - Analytics DB Init Error: file is not a database
+2025-11-23 07:06:58,483 - ERROR - Analytics DB Init Error: file is not a database
+2025-11-23 07:12:30,294 - CRITICAL - Fatal error: No module named 'textual'
+2025-11-23 07:20:24,835 - CRITICAL - Fatal error: No module named 'textual'
+2025-11-23 07:28:41,797 - ERROR - Analytics DB Init Error: file is not a database
+2025-11-23 07:28:41,801 - WARNING - Docker available but not running/accessible: Error while fetching server API version: (2, 'CreateFile', 'The system cannot find the file specified.')
+2025-11-23 07:46:12,884 - ERROR - Analytics DB Init Error: file is not a database
+2025-11-23 07:46:12,886 - WARNING - Docker available but not running/accessible: Error while fetching server API version: (2, 'CreateFile', 'The system cannot find the file specified.')
+2025-11-23 07:47:52,260 - ERROR - Analytics DB Init Error: file is not a database
+2025-11-23 07:47:52,262 - WARNING - Docker available but not running/accessible: Error while fetching server API version: (2, 'CreateFile', 'The system cannot find the file specified.')
+2025-11-23 07:48:29,003 - ERROR - Analytics DB Init Error: file is not a database
+2025-11-23 07:48:29,005 - WARNING - Docker available but not running/accessible: Error while fetching server API version: (2, 'CreateFile', 'The system cannot find the file specified.')

@@ -50,38 +50,54 @@ except ImportError:
 
 # Import new advanced modules
 try:
-    from context_aware_ai import ContextAwareAI
-    from analytics_monitor import AnalyticsMonitor
-    from games_learning import GamesLearning
-    from creative_tools import CreativeTools
-    from advanced_security import AdvancedSecurity
-    from task_manager import TaskManager
-    from theme_manager import ThemeManager
-    from integration_hub import IntegrationHub
-    from code_review_assistant import CodeReviewAssistant
+    from terminal.context_aware_ai import ContextAwareAI
+    from terminal.analytics_monitor import AnalyticsMonitor
+    from terminal.games_learning import GamesLearning
+    from terminal.creative_tools import CreativeTools
+    from terminal.advanced_security import AdvancedSecurity
+    from terminal.task_manager import TaskManager
+    from terminal.theme_manager import ThemeManager
+    from terminal.integration_hub import IntegrationHub
+    from terminal.code_review_assistant import CodeReviewAssistant
     from terminal.docker_manager import DockerManager
     from terminal.snippet_manager import SnippetManager
-    from terminal.persona_manager import PersonaManager
     from terminal.persona_manager import PersonaManager
     from terminal.network_tools import NetworkTools
     from terminal.games_tui import GamesTUI
     from terminal.dashboard_tui import NexusDashboard
 except ImportError:
-    ContextAwareAI = None
-    AnalyticsMonitor = None
-    GamesLearning = None
-    CreativeTools = None
-    AdvancedSecurity = None
-    TaskManager = None
-    ThemeManager = None
-    CodeReviewAssistant = None
-    IntegrationHub = None
-    DockerManager = None
-    SnippetManager = None
-    PersonaManager = None
-    NetworkTools = None
-    GamesTUI = None
-    NexusDashboard = None
+    try:
+        from context_aware_ai import ContextAwareAI
+        from analytics_monitor import AnalyticsMonitor
+        from games_learning import GamesLearning
+        from creative_tools import CreativeTools
+        from advanced_security import AdvancedSecurity
+        from task_manager import TaskManager
+        from theme_manager import ThemeManager
+        from integration_hub import IntegrationHub
+        from code_review_assistant import CodeReviewAssistant
+        from docker_manager import DockerManager
+        from snippet_manager import SnippetManager
+        from persona_manager import PersonaManager
+        from network_tools import NetworkTools
+        from games_tui import GamesTUI
+        from dashboard_tui import NexusDashboard
+    except ImportError:
+        ContextAwareAI = None
+        AnalyticsMonitor = None
+        GamesLearning = None
+        CreativeTools = None
+        AdvancedSecurity = None
+        TaskManager = None
+        ThemeManager = None
+        CodeReviewAssistant = None
+        IntegrationHub = None
+        DockerManager = None
+        SnippetManager = None
+        PersonaManager = None
+        NetworkTools = None
+        GamesTUI = None
+        NexusDashboard = None
 
 # Cache for Ollama model list to avoid repeated expensive calls.
 from functools import lru_cache
@@ -430,7 +446,7 @@ class AIManager:
         if self.status["ollama"] == "Ready":
             try:
                 models = self._get_ollama_models()
-                self.status["ollama"] = f" Ready ({models})" if models != "Unknown" else "❌ No models"
+                self.status["ollama"] = f" Ready ({models})" if models != "Unknown" else " No models"
             except Exception as e:
                 self.status["ollama"] = f" Error: {str(e)[:50]}..."
                 logging.error(f"Ollama model check failed: {str(e)}")
@@ -578,7 +594,7 @@ class AIManager:
                         _prompt_cache.set(cache_key, result_text)
                         return result_text
                     except Exception as e:
-                        return f"❌ Error: {str(e)}"
+                        return f" Error: {str(e)}"
                 elif model == "huggingface":
                     result_text = self._query_huggingface(clean_prompt)
                     _prompt_cache.set(cache_key, result_text)
@@ -833,7 +849,7 @@ class UserManager:
 
 # --- Core Application ---
 class NexusAI:
-    def __init__(self):
+    def __init__(self, quiet: bool = False):
         self.user_manager = UserManager()
         self.ai = AIManager()
         self.security = SecurityManager()
@@ -881,7 +897,8 @@ class NexusAI:
             "mcp": "Model Context Protocol (API)"
         }
 
-        self.show_banner()
+        if not quiet:
+            self.show_banner()
     
     def _load_config(self) -> str:
         try:
@@ -918,7 +935,7 @@ class NexusAI:
         
         # Main Title - Big and Clear
         grid.add_row(Text(" ", style="reset")) # Spacer
-        grid.add_row(Text("✨ AETHER AI ✨", style="bold cyan underline", justify="center"))
+        grid.add_row(Text(" AETHER AI ", style="bold cyan underline", justify="center"))
         grid.add_row(Text(" ", style="reset")) # Spacer
         
         # Subtitle
@@ -938,7 +955,7 @@ class NexusAI:
         ))
         
         # Status Table
-        table = Table(title="🔧 AI Services Status", show_header=True, header_style="bold magenta")
+        table = Table(title=" AI Services Status", show_header=True, header_style="bold magenta")
         table.add_column("Service", style="cyan", width=15)
         table.add_column("Status", style="green", width=30)
         table.add_column("Description", style="white", width=40)
@@ -951,14 +968,10 @@ class NexusAI:
             "chatgpt": "OpenAI's ChatGPT (API)",
             "mcp": "Model Context Protocol (API)"
         }
-        
-        for service, status in self.ai.status.items():
-            table.add_row(service.upper(), status, descriptions.get(service, "AI Service"))
-        
-        console.print(table)
-        console.print(f"\n🎯 Current Model: [bold yellow]{self.current_model.upper()}[/bold yellow]")
-        console.print("\n💡 Type [bold cyan]/help[/bold cyan] for commands or start chatting!\n")
     
+        console.print(f"\n Current Model: [bold yellow]{self.current_model.upper()}[/bold yellow]")
+        console.print("\n Type [bold cyan]/help[/bold cyan] for commands or start chatting!\n")
+
     def execute_command(self, cmd: str) -> str:
         try:
             clean_cmd = self.security.sanitize(cmd)
@@ -968,20 +981,24 @@ class NexusAI:
             parts = shlex.split(clean_cmd)
             if not parts or parts[0] not in self.allowed_commands:
                 return f"❌ Command '{parts[0] if parts else ''}' not allowed. Allowed: {', '.join(self.allowed_commands)}"
+
             # Block wildcards, path traversal, shell metacharacters in arguments
             forbidden_patterns = [r"[><|;&]", r"\*", r"\.\.", r"/etc", r"/var", r"/root", r"\\"]
             for arg in parts[1:]:
                 for pat in forbidden_patterns:
                     if re.search(pat, arg):
                         return "❌ Command arguments contain forbidden patterns."
+            
             # Restrict file arguments for file commands to current directory only
             file_cmds = {"cat", "head", "tail"}
             if parts[0] in file_cmds and len(parts) > 1:
                 for arg in parts[1:]:
                     if not os.path.abspath(arg).startswith(os.getcwd()):
                         return "❌ Only files in the current directory are allowed."
+            
             # Log only the command name for audit (not arguments)
             logging.info(f"Command executed: {parts[0]}")
+            
             result = subprocess.run(
                 parts, capture_output=True,
                 text=True, timeout=15
@@ -989,6 +1006,7 @@ class NexusAI:
             output = (result.stdout or "")[:2000]
             error = (result.stderr or "")[:2000]
             return output if output else error or "Command executed"
+            
         except subprocess.TimeoutExpired:
             return "❌ Command timed out (15s limit)"
         except Exception as e:
@@ -3013,7 +3031,7 @@ class NexusAI:
                     return f"❌ {diag['error']}"
                 output = "🌐 Network Diagnostics:\n"
                 for service, status in diag['connectivity'].items():
-                    output += f"{service}: {'✅' if status.get('status') == 'reachable' else '❌'} "
+                    output += f"{service}: {'[OK]' if status.get('status') == 'reachable' else '[FAIL]'} "
                     if 'latency_ms' in status:
                         output += f"({status['latency_ms']}ms)"
                     output += "\n"
@@ -3041,7 +3059,7 @@ class NexusAI:
                 output = "🏥 System Health Check:\n"
                 output += f"Overall Status: {health['overall_status'].upper()}\n"
                 for component, check in health['checks'].items():
-                    status_icon = "✅" if check['status'] == "good" else "⚠️" if check['status'] == "warning" else "❌"
+                    status_icon = "[OK]" if check['status'] == "good" else "[WARN]" if check['status'] == "warning" else "[FAIL]"
                     output += f"{component.title()}: {status_icon} {check['message']}\n"
                 if health.get('recommendations'):
                     output += "\n💡 Recommendations:\n"
@@ -3058,7 +3076,7 @@ class NexusAI:
                 challenge = self.games.get_coding_challenge(difficulty)
                 if "error" in challenge:
                     return f"❌ {challenge['error']}"
-                output = f"🎯 {challenge['title']}\n"
+                output = f" {challenge['title']}\n"
                 output += f"Difficulty: {challenge['difficulty'].upper()}\n"
                 output += f"Problem: {challenge['problem']['question']}\n"
                 output += f"Starter Code:\n{challenge['problem']['starter_code']}\n"
@@ -3122,7 +3140,7 @@ class NexusAI:
                 if "error" in quiz:
                     return f"❌ {quiz['error']}"
                 if quiz.get('completed'):
-                    return f"🎉 Quiz Completed!\nFinal Score: {quiz['final_score']}%\nCorrect: {quiz['correct_answers']}/{quiz['total_questions']}"
+                    return f" Quiz Completed!\nFinal Score: {quiz['final_score']}%\nCorrect: {quiz['correct_answers']}/{quiz['total_questions']}"
                 output = f"❓ Question {quiz['question_number']}/{quiz['total_questions']}\n"
                 output += f"{quiz['question']}\n\n"
                 for i, option in enumerate(quiz['options']):
@@ -3142,7 +3160,7 @@ class NexusAI:
                         result = self.games.submit_quiz_answer(parts[1], answer)
                         if "error" in result:
                             return f"❌ {result['error']}"
-                        correctness = "✅ Correct!" if result['correct'] else "❌ Incorrect"
+                        correctness = " Correct!" if result['correct'] else " Incorrect"
                         output = f"{correctness}\n"
                         output += f"Explanation: {result['explanation']}\n"
                         if result.get('next_question'):
@@ -3304,7 +3322,7 @@ class NexusAI:
                 output = "🤖 Available AI Models:\n\n"
                 for model, description in self.model_descriptions.items():
                     status = self.ai.status.get(model, "Unknown")
-                    status_icon = "✅" if "✅" in status else "❌" if "❌" in status else "⚪"
+                    status_icon = "[OK]" if "[OK]" in status or "Ready" in status else "[FAIL]" if "[FAIL]" in status or "Error" in status else "[--]"
                     output += f"{status_icon} {model.upper()}: {description}\n"
                     output += f"   Status: {status}\n\n"
                 output += "💡 Use '/switch [model]' to change models\n"
@@ -3327,7 +3345,7 @@ class NexusAI:
                     if not models_data:
                         return "❌ No Ollama models found.\n   Use 'ollama pull [model]' to download models."
                     
-                    output = "🦙 Available Ollama Models:\n\n"
+                    output = " Available Ollama Models:\n\n"
                     for model in models_data:
                         # Handle both dict and Model object
                         if hasattr(model, 'model'):
@@ -3358,7 +3376,7 @@ class NexusAI:
                         else:
                             date_str = "Unknown"
                         
-                        output += f"📦 {name}\n"
+                        output += f" {name}\n"
                         output += f"   Size: {size_str}\n"
                         output += f"   Modified: {date_str}\n\n"
                     
@@ -3375,11 +3393,11 @@ class NexusAI:
                 """Show currently active AI model"""
                 current = self.current_model or "None"
                 status = self.ai.status.get(current.split(':')[0] if ':' in current else current, "Unknown")
-                output = f"🤖 Current AI Model: {current.upper()}\n"
+                output = f" Current AI Model: {current.upper()}\n"
                 output += f"📊 Status: {status}\n"
                 if current.startswith("ollama:"):
                     model_name = current.split(":", 1)[1]
-                    output += f"🦙 Ollama Model: {model_name}\n"
+                    output += f" Ollama Model: {model_name}\n"
                 description = self.model_descriptions.get(current.split(':')[0] if ':' in current else current, "No description available")
                 output += f"📝 Description: {description}\n"
                 return output
@@ -3398,124 +3416,39 @@ class NexusAI:
                     try:
                         app = NexusDashboard()
                         app.run()
-                        return "✅ Dashboard closed"
+                        return f" Dashboard closed"
                     except Exception as e:
-                        return f"❌ Error running dashboard: {e}"
-                return "❌ Dashboard module not available"
+                        return f" Error running dashboard: {e}"
+                return " Dashboard module not available"
 
             if cmd == "games":
                 if GamesTUI:
                     try:
                         games_tui = GamesTUI(console)
                         games_tui.show_menu()
-                        return "✅ Games menu closed"
+                        return " Games menu closed"
                     except Exception as e:
-                        return f"❌ Error running games: {e}"
-                return "❌ Games module not available"
-
-            if cmd == "matrix":
-                if self.theme_manager:
-                    self.theme_manager.set_current_theme("matrix")
-                    update_console_theme(self.theme_manager)
-                    return "🐇 Follow the white rabbit..."
-                return "❌ Theme manager not available"
-
-            # Handle unrecognized commands
-            else:
-                return f"❌ Unknown command: /{cmd}. Type /help for available commands."
+                        return f" Error running games: {e}"
+                return " Games module not available"
 
         except Exception as e:
             logging.error(f"Command handling error: {str(e)}")
-            return "❌ Command processing error"
-
+            return " Command processing error"
 # --- Main Loop ---
 def main() -> int:
     """Start the interactive Aether AI terminal. Returns exit code."""
     try:
-        # Startup Animation
-        console.clear()
+        # Import and run the TUI application
+        from terminal.tui_app import NexusTUI
+        app = NexusTUI()
+        app.run()
+        return 0
         
-        # Initialize AI first to get theme manager
-        ai = NexusAI()
-        
-        if global_theme_manager:
-            frames = global_theme_manager.get_startup_animation()
-            with Live(console=console, refresh_per_second=4) as live:
-                for frame in frames:
-                    live.update(Panel(
-                        Text(frame, justify="center", style="bold green"),
-                        title="[bold green]SYSTEM BOOT[/bold green]",
-                        border_style="green",
-                        padding=(2, 2)
-                    ))
-                    time.sleep(0.8)
-        
-        console.print(Panel(
-            "[bold green]🚀 NEXUS AI TERMINAL v3.1[/bold green]\n"
-            "[dim]Advanced Artificial Intelligence Interface[/dim]\n\n"
-            "Type [bold cyan]/help[/bold cyan] for commands or just start chatting.\n"
-            "Try [bold cyan]/dashboard[/bold cyan], [bold cyan]/games[/bold cyan], or [bold cyan]/matrix[/bold cyan]!",
-            title="Welcome",
-            border_style="green"
-        ))
-
-        while True:
-            try:
-                model_display = ai.current_model.upper() if ai.current_model else "UNKNOWN"
-                prompt = input(f"\n[{model_display}] 🚀 > ").strip()
-
-                if prompt.lower() in ["exit", "/exit", "quit", "/quit"]:
-                    console.print("\n[bold green]👋 Thanks for using Aether AI Terminal![/bold green]")
-                    console.print("[bold cyan]🚀 Keep innovating![/bold cyan]\n")
-                    return 0
-
-                if not prompt:
-                    continue
-
-                # Show thinking indicator for AI responses
-                if not prompt.startswith("/"):
-                    with Progress(
-                        SpinnerColumn(),
-                        TextColumn("[bold blue]🤖 AI is thinking..."),
-                        transient=True
-                    ) as progress:
-                        progress.add_task("thinking", total=None)
-                        response = ai.process_input(prompt)
-                else:
-                    response = ai.process_input(prompt)
-
-                # Ensure response is always a string
-                if response is None:
-                    response = "❌ Error: Command returned no response"
-
-                if response and isinstance(response, str) and response.strip():
-                    console.print(Panel(
-                        response,
-                        title="[bold cyan]🤖 AI[/bold cyan]",
-                        border_style="cyan",
-                        title_align="left"
-                    ))
-                elif response:
-                    console.print(Panel(
-                        str(response),
-                        title="[bold cyan]🤖 AI[/bold cyan]",
-                        border_style="cyan",
-                        title_align="left"
-                    ))
-
-            except KeyboardInterrupt:
-                console.print("\n[yellow]💡 Use '/exit' to quit gracefully[/yellow]")
-            except Exception as e:
-                logging.error(f"Loop error: {str(e)}")
-                console.print(f"[bold red]Error in loop: {str(e)}[/bold red]")
-
     except Exception as e:
         logging.critical(f"Fatal error: {str(e)}")
-        console.print(f"[bold red]💥 Critical error:[/bold red] {str(e)}")
-        console.print("[yellow]Check ai_assistant.log for details[/yellow]")
+        print(f"Critical error: {str(e)}")
         return 1
 
 
 if __name__ == "__main__":
     sys.exit(main())
-    

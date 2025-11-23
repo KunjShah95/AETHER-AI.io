@@ -122,16 +122,16 @@ class AdvancedFeatures:
 
             execution_info = ""
             if result.returncode == 0:
-                execution_info = f"✅ Code executed successfully\n"
+                execution_info = f"[OK] Code executed successfully\n"
             else:
-                execution_info = f"❌ Code execution failed\n{result.stderr}\n"
+                execution_info = f"[ERR] Code execution failed\n{result.stderr}\n"
 
-            return f"{execution_info}📊 Performance Profile:\n{profile_output}"
+            return f"{execution_info} Performance Profile:\n{profile_output}"
 
         except subprocess.TimeoutExpired:
-            return "❌ Profiling timed out (60s limit)"
+            return "[ERR] Profiling timed out (60s limit)"
         except Exception as e:
-            return f"❌ Error profiling: {str(e)}"
+            return f"[ERR] Error profiling: {str(e)}"
 
     @staticmethod
     def run_tests(filename: str) -> str:
@@ -146,7 +146,7 @@ class AdvancedFeatures:
         """
         try:
             if not os.path.exists(filename):
-                return f"❌ File not found: {filename}"
+                return f"[ERR] File not found: {filename}"
 
             # Run pytest
             result = subprocess.run(
@@ -157,12 +157,12 @@ class AdvancedFeatures:
             )
 
             if result.returncode == 0:
-                return f"✅ Tests passed:\n{result.stdout}"
+                return f"[OK] Tests passed:\n{result.stdout}"
             else:
-                return f"❌ Tests failed:\n{result.stdout}\n{result.stderr}"
+                return f"[ERR] Tests failed:\n{result.stdout}\n{result.stderr}"
 
         except Exception as e:
-            return f"❌ Error running tests: {str(e)}"
+            return f"[ERR] Error running tests: {str(e)}"
 
     @staticmethod
     def lint_code(filename: str) -> str:
@@ -177,7 +177,7 @@ class AdvancedFeatures:
         """
         try:
             if not os.path.exists(filename):
-                return f"❌ File not found: {filename}"
+                return f"[ERR] File not found: {filename}"
 
             # Run flake8
             result = subprocess.run(
@@ -188,12 +188,12 @@ class AdvancedFeatures:
             )
 
             if result.returncode == 0:
-                return "✅ No linting issues found"
+                return "[OK] No linting issues found"
             else:
-                return f"⚠️ Linting issues:\n{result.stdout}"
+                return f"[WARN] Linting issues:\n{result.stdout}"
 
         except Exception as e:
-            return f"❌ Error running linter: {str(e)}"
+            return f"[ERR] Error running linter: {str(e)}"
 
     @staticmethod
     def test_api_endpoint(url: str) -> str:
@@ -216,7 +216,7 @@ class AdvancedFeatures:
             # Make request with timeout
             response = requests.get(url, timeout=10)
 
-            result = "🌐 API Test Results:\n"
+            result = " API Test Results:\n"
             result += f"URL: {url}\n"
             result += f"Status: {response.status_code}\n"
             result += f"Response Time: {response.elapsed.total_seconds()}s\n"
@@ -224,7 +224,7 @@ class AdvancedFeatures:
             result += f"Content Length: {len(response.text)} chars\n"
 
             if response.status_code == 200:
-                result += "✅ Success!\n"
+                result += "[OK] Success!\n"
                 # Try to format JSON response
                 try:
                     if 'json' in response.headers.get('content-type', '').lower():
@@ -235,14 +235,14 @@ class AdvancedFeatures:
                 except:
                     result += f"Response Preview: {response.text[:200]}..."
             else:
-                result += f"❌ Error: {response.reason}"
+                result += f"[ERR] Error: {response.reason}"
 
             return result
 
         except requests.exceptions.RequestException as e:
-            return f"❌ API test failed: {str(e)}"
+            return f"[ERR] API test failed: {str(e)}"
         except Exception as e:
-            return f"❌ Error testing API: {str(e)}"
+            return f"[ERR] Error testing API: {str(e)}"
 
     @staticmethod
     def connect_database(db_type: str, connection_string: str) -> str:
@@ -261,7 +261,7 @@ class AdvancedFeatures:
                 import psycopg2
                 conn = psycopg2.connect(connection_string)
                 conn.close()
-                return "✅ PostgreSQL connection successful"
+                return "[OK] PostgreSQL connection successful"
 
             elif db_type.lower() == "mysql":
                 import pymysql
@@ -269,7 +269,7 @@ class AdvancedFeatures:
                 # This is a simplified example - real implementation would parse properly
                 conn = pymysql.connect(connection_string)
                 conn.close()
-                return "✅ MySQL connection successful"
+                return "[OK] MySQL connection successful"
 
             elif db_type.lower() == "mongodb":
                 from pymongo import MongoClient
@@ -277,22 +277,22 @@ class AdvancedFeatures:
                 # Test connection
                 client.admin.command('ping')
                 client.close()
-                return "✅ MongoDB connection successful"
+                return "[OK] MongoDB connection successful"
 
             elif db_type.lower() == "redis":
                 import redis
                 r = redis.from_url(connection_string)
                 r.ping()
                 r.close()
-                return "✅ Redis connection successful"
+                return "[OK] Redis connection successful"
 
             else:
-                return f"❌ Unsupported database type: {db_type}"
+                return f"[ERR] Unsupported database type: {db_type}"
 
         except ImportError as e:
-            return f"❌ Database driver not installed: {str(e)}"
+            return f"[ERR] Database driver not installed: {str(e)}"
         except Exception as e:
-            return f"❌ Database connection failed: {str(e)}"
+            return f"[ERR] Database connection failed: {str(e)}"
 
     @staticmethod
     def create_project_template(project_type: str) -> str:
@@ -419,7 +419,7 @@ if __name__ == '__main__':
         }
 
         if project_type not in project_templates:
-            return f"❌ Unknown project type. Available: {', '.join(project_templates.keys())}"
+            return f"[ERR] Unknown project type. Available: {', '.join(project_templates.keys())}"
 
         try:
             project_dir = f"{project_type}_project"
@@ -431,10 +431,10 @@ if __name__ == '__main__':
                 with open(full_path, 'w') as f:
                     f.write(content)
 
-            return f"✅ {project_type.upper()} project created in ./{project_dir}/\n\nNext steps:\n1. cd {project_dir}\n2. Install dependencies: pip install -r requirements.txt (if applicable)\n3. Run the project as indicated in README.md"
+            return f"[OK] {project_type.upper()} project created in ./{project_dir}/\n\nNext steps:\n1. cd {project_dir}\n2. Install dependencies: pip install -r requirements.txt (if applicable)\n3. Run the project as indicated in README.md"
 
         except Exception as e:
-            return f"❌ Error creating project: {str(e)}"
+            return f"[ERR] Error creating project: {str(e)}"
 
     @staticmethod
     def explore_directory(path: str = ".") -> str:
@@ -450,7 +450,7 @@ if __name__ == '__main__':
         try:
             current_dir = Path(path)
             if not current_dir.exists():
-                return f"❌ Directory not found: {path}"
+                return f"[ERR] Directory not found: {path}"
 
             items = []
             total_files = 0
@@ -464,20 +464,20 @@ if __name__ == '__main__':
                         total_size += size
                         total_files += 1
                         size_str = AdvancedFeatures._format_file_size(size)
-                        items.append(f"📄 {item.name} ({size_str})")
+                        items.append(f" {item.name} ({size_str})")
                     elif item.is_dir():
                         total_dirs += 1
-                        items.append(f"📁 {item.name}/")
+                        items.append(f" {item.name}/")
                 except (OSError, PermissionError):
-                    items.append(f"🔒 {item.name} (access denied)")
+                    items.append(f"[LOCK] {item.name} (access denied)")
 
-            output = f"📂 Directory: {current_dir.absolute()}\n"
-            output += f"📊 Summary: {total_files} files, {total_dirs} directories, {AdvancedFeatures._format_file_size(total_size)} total\n\n"
+            output = f" Directory: {current_dir.absolute()}\n"
+            output += f" Summary: {total_files} files, {total_dirs} directories, {AdvancedFeatures._format_file_size(total_size)} total\n\n"
 
             # Sort items: directories first, then files
-            dirs = [item for item in items if item.startswith("📁")]
-            files = [item for item in items if not item.startswith("📁") and not item.startswith("🔒")]
-            locked = [item for item in items if item.startswith("🔒")]
+            dirs = [item for item in items if item.startswith(" ")]
+            files = [item for item in items if not item.startswith(" ") and not item.startswith("[LOCK]")]
+            locked = [item for item in items if item.startswith("[LOCK]")]
 
             all_items = dirs + files + locked
 
@@ -490,7 +490,7 @@ if __name__ == '__main__':
             return output
 
         except Exception as e:
-            return f"❌ Error exploring directory: {str(e)}"
+            return f"[ERR] Error exploring directory: {str(e)}"
 
     @staticmethod
     def _format_file_size(size_bytes: int) -> str:
@@ -527,32 +527,32 @@ if __name__ == '__main__':
             # Network information
             net = psutil.net_io_counters()
 
-            output = "📊 System Monitor:\n\n"
-            output += f"🖥️ OS: {platform.system()} {platform.release()}\n"
-            output += f"🔧 CPU: {cpu_count} cores, {cpu_percent}% used"
+            output = " System Monitor:\n\n"
+            output += f" OS: {platform.system()} {platform.release()}\n"
+            output += f" CPU: {cpu_count} cores, {cpu_percent}% used"
             if cpu_freq:
                 output += f", {cpu_freq.current:.0f}MHz"
             output += "\n"
 
-            output += f"💾 Memory: {memory.percent}% used "
+            output += f" Memory: {memory.percent}% used "
             output += f"({AdvancedFeatures._format_file_size(memory.used)} / {AdvancedFeatures._format_file_size(memory.total)})\n"
 
-            output += f"💿 Disk: {disk.percent}% used "
+            output += f" Disk: {disk.percent}% used "
             output += f"({AdvancedFeatures._format_file_size(disk.used)} / {AdvancedFeatures._format_file_size(disk.total)})\n"
 
-            output += f"🌐 Network: {AdvancedFeatures._format_file_size(net.bytes_sent)} sent, "
+            output += f" Network: {AdvancedFeatures._format_file_size(net.bytes_sent)} sent, "
             output += f"{AdvancedFeatures._format_file_size(net.bytes_recv)} received\n"
 
             # Process information
             process_count = len(psutil.pids())
-            output += f"⚙️ Processes: {process_count} running\n"
+            output += f" Processes: {process_count} running\n"
 
             return output
 
         except ImportError:
-            return "❌ System monitoring requires 'psutil' package. Install with: pip install psutil"
+            return "[ERR] System monitoring requires 'psutil' package. Install with: pip install psutil"
         except Exception as e:
-            return f"❌ Error monitoring system: {str(e)}"
+            return f"[ERR] Error monitoring system: {str(e)}"
 
     @staticmethod
     def analyze_logs(directory: str = ".") -> str:
@@ -572,7 +572,7 @@ if __name__ == '__main__':
                     log_files.append(file)
 
             if not log_files:
-                return "❌ No log files found in current directory"
+                return "[ERR] No log files found in current directory"
 
             analysis = {}
             for log_file in log_files[:5]:  # Limit to 5 files
@@ -603,20 +603,20 @@ if __name__ == '__main__':
                 except Exception as e:
                     analysis[log_file] = {'error': str(e)}
 
-            output = "📋 Log Analysis:\n\n"
+            output = " Log Analysis:\n\n"
             for file, stats in analysis.items():
                 if 'error' in stats:
-                    output += f"📄 {file}: Error reading file - {stats['error']}\n"
+                    output += f" {file}: Error reading file - {stats['error']}\n"
                 else:
-                    output += f"📄 {file}:\n"
-                    output += f"  📊 Total Lines: {stats['total_lines']}\n"
-                    output += f"  ❌ Errors: {stats['errors']}\n"
-                    output += f"  ⚠️ Warnings: {stats['warnings']}\n"
-                    output += f"  ℹ️ Info: {stats['info']}\n"
-                    output += f"  🔥 Recent Errors: {stats['recent_errors']}\n"
+                    output += f" {file}:\n"
+                    output += f"   Total Lines: {stats['total_lines']}\n"
+                    output += f"   [ERR] Errors: {stats['errors']}\n"
+                    output += f"   [WARN] Warnings: {stats['warnings']}\n"
+                    output += f"   [INFO] Info: {stats['info']}\n"
+                    output += f"   [ERR] Recent Errors: {stats['recent_errors']}\n"
                 output += "\n"
 
             return output
 
         except Exception as e:
-            return f"❌ Error analyzing logs: {str(e)}"
+            return f"[ERR] Error analyzing logs: {str(e)}"
