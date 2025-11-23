@@ -3,6 +3,8 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.live import Live
+from rich.layout import Layout
 import yaml
 import re
 import logging
@@ -60,7 +62,10 @@ try:
     from terminal.docker_manager import DockerManager
     from terminal.snippet_manager import SnippetManager
     from terminal.persona_manager import PersonaManager
+    from terminal.persona_manager import PersonaManager
     from terminal.network_tools import NetworkTools
+    from terminal.games_tui import GamesTUI
+    from terminal.dashboard_tui import NexusDashboard
 except ImportError:
     ContextAwareAI = None
     AnalyticsMonitor = None
@@ -75,6 +80,8 @@ except ImportError:
     SnippetManager = None
     PersonaManager = None
     NetworkTools = None
+    GamesTUI = None
+    NexusDashboard = None
 
 # Cache for Ollama model list to avoid repeated expensive calls.
 from functools import lru_cache
@@ -3386,6 +3393,33 @@ class NexusAI:
                     return "Usage: /run [command]"
                 return self.execute_command(parts[1])
 
+            if cmd == "dashboard":
+                if NexusDashboard:
+                    try:
+                        app = NexusDashboard()
+                        app.run()
+                        return "✅ Dashboard closed"
+                    except Exception as e:
+                        return f"❌ Error running dashboard: {e}"
+                return "❌ Dashboard module not available"
+
+            if cmd == "games":
+                if GamesTUI:
+                    try:
+                        games_tui = GamesTUI(console)
+                        games_tui.show_menu()
+                        return "✅ Games menu closed"
+                    except Exception as e:
+                        return f"❌ Error running games: {e}"
+                return "❌ Games module not available"
+
+            if cmd == "matrix":
+                if self.theme_manager:
+                    self.theme_manager.set_current_theme("matrix")
+                    update_console_theme(self.theme_manager)
+                    return "🐇 Follow the white rabbit..."
+                return "❌ Theme manager not available"
+
             # Handle unrecognized commands
             else:
                 return f"❌ Unknown command: /{cmd}. Type /help for available commands."
@@ -3398,8 +3432,32 @@ class NexusAI:
 def main() -> int:
     """Start the interactive Aether AI terminal. Returns exit code."""
     try:
-        console.print("[bold green]🚀 Starting Aether AI Terminal...[/bold green]")
+        # Startup Animation
+        console.clear()
+        
+        # Initialize AI first to get theme manager
         ai = NexusAI()
+        
+        if global_theme_manager:
+            frames = global_theme_manager.get_startup_animation()
+            with Live(console=console, refresh_per_second=4) as live:
+                for frame in frames:
+                    live.update(Panel(
+                        Text(frame, justify="center", style="bold green"),
+                        title="[bold green]SYSTEM BOOT[/bold green]",
+                        border_style="green",
+                        padding=(2, 2)
+                    ))
+                    time.sleep(0.8)
+        
+        console.print(Panel(
+            "[bold green]🚀 NEXUS AI TERMINAL v3.1[/bold green]\n"
+            "[dim]Advanced Artificial Intelligence Interface[/dim]\n\n"
+            "Type [bold cyan]/help[/bold cyan] for commands or just start chatting.\n"
+            "Try [bold cyan]/dashboard[/bold cyan], [bold cyan]/games[/bold cyan], or [bold cyan]/matrix[/bold cyan]!",
+            title="Welcome",
+            border_style="green"
+        ))
 
         while True:
             try:
@@ -3431,9 +3489,19 @@ def main() -> int:
                     response = "❌ Error: Command returned no response"
 
                 if response and isinstance(response, str) and response.strip():
-                    console.print(f"\n[bold cyan]🤖 AI:[/bold cyan] {response}")
+                    console.print(Panel(
+                        response,
+                        title="[bold cyan]🤖 AI[/bold cyan]",
+                        border_style="cyan",
+                        title_align="left"
+                    ))
                 elif response:
-                    console.print(f"\n[bold cyan]🤖 AI:[/bold cyan] {response}")
+                    console.print(Panel(
+                        str(response),
+                        title="[bold cyan]🤖 AI[/bold cyan]",
+                        border_style="cyan",
+                        title_align="left"
+                    ))
 
             except KeyboardInterrupt:
                 console.print("\n[yellow]💡 Use '/exit' to quit gracefully[/yellow]")

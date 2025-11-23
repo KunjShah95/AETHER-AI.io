@@ -198,6 +198,64 @@ class ThemeManager:
                     "arrow": "➤",
                     "bullet": "●"
                 }
+            },
+            "matrix": {
+                "name": "The Matrix",
+                "description": "Digital rain inspired theme",
+                "colors": {
+                    "primary": "#00ff00",
+                    "secondary": "#008f11",
+                    "accent": "#003b00",
+                    "success": "#00ff00",
+                    "warning": "#ffff00",
+                    "error": "#ff0000",
+                    "info": "#00cc00",
+                    "text": "#00ff00",
+                    "text_secondary": "#008f11",
+                    "background": "#000000",
+                    "panel_bg": "#020202",
+                    "border": "#003300",
+                    "highlight": "#001100"
+                },
+                "icons": {
+                    "success": "[OK]",
+                    "error": "[ERR]",
+                    "warning": "[!]",
+                    "info": "[i]",
+                    "loading": "...",
+                    "complete": "[DONE]",
+                    "arrow": ">",
+                    "bullet": "*"
+                }
+            },
+            "hacker": {
+                "name": "Cyber Security",
+                "description": "High contrast terminal theme",
+                "colors": {
+                    "primary": "#ff00ff",
+                    "secondary": "#00ffff",
+                    "accent": "#ffff00",
+                    "success": "#00ff00",
+                    "warning": "#ff0000",
+                    "error": "#ff0000",
+                    "info": "#0000ff",
+                    "text": "#ffffff",
+                    "text_secondary": "#aaaaaa",
+                    "background": "#000000",
+                    "panel_bg": "#111111",
+                    "border": "#ffffff",
+                    "highlight": "#222222"
+                },
+                "icons": {
+                    "success": "+",
+                    "error": "x",
+                    "warning": "!",
+                    "info": "?",
+                    "loading": "/",
+                    "complete": "#",
+                    "arrow": ">>",
+                    "bullet": "-"
+                }
             }
         }
 
@@ -370,3 +428,13 @@ THEME_{theme_name.upper()} = {json.dumps(theme, indent=4)}
         """Reset to default dark theme"""
         self.current_theme = "dark"
         return "✅ Reset to default Dark Professional theme"
+
+    def get_startup_animation(self) -> List[str]:
+        """Get frames for startup animation"""
+        return [
+            "Initializing NEXUS AI...",
+            "Loading modules...",
+            "Connecting to neural network...",
+            "Establishing secure link...",
+            "System ready."
+        ]

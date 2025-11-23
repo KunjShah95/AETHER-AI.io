@@ -255,6 +255,27 @@ MIT License — see [LICENSE](LICENSE)
 
 ---
 
+---
+
+## Deployment
+
+### Website Deployment
+
+The NEXUS AI website (frontend) is ready for deployment to Vercel:
+
+- **Quick Deploy**: [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/KunjShah95/NEXUS-AI.io)
+- **Detailed Guide**: See [DEPLOYMENT.md](DEPLOYMENT.md) for complete instructions
+- **Configuration**: All necessary files (`vercel.json`, optimized `vite.config.ts`) are included
+
+The website features:
+
+- Optimized production build with code splitting
+- SEO-ready with proper meta tags
+- SPA routing configured
+- Static asset caching
+
+---
+
 ## Support & Links
 
 - Website: [Project website](https://kunjshah95.github.io/NEXUS-AI.io/)
@@ -263,5 +284,6 @@ MIT License — see [LICENSE](LICENSE)
 - Security Policy: [SECURITY.md](SECURITY.md)
 - Code of Conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 - Contributing Guide: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Deployment Guide: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 If this project helps you, consider starring the repo. It helps others find it too.
