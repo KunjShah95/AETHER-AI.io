@@ -1,109 +1,68 @@
 import React from "react";
-import { Check } from "lucide-react";
+import { Check, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/MovingBorder";
 
 export function Pricing() {
     return (
-        <section className="py-24 bg-black relative z-20">
+        <section className="py-24 bg-black relative z-20" id="pricing">
             <div className="max-w-7xl mx-auto px-6">
                 <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">
                         Pricing
                     </h2>
                     <p className="text-lg text-neutral-400 max-w-2xl mx-auto">
-                        Free for personal use. Enterprise plans available for teams.
+                        Open source and free forever. No hidden fees.
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <div className="flex justify-center">
                     {/* Free Plan */}
-                    <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-8 flex flex-col relative overflow-hidden group hover:border-terminal-cyan/50 transition-colors">
-                        <div className="mb-4">
-                            <h3 className="text-xl font-bold text-white">Community</h3>
-                            <p className="text-neutral-400 text-sm mt-1">For individual developers</p>
-                        </div>
-                        <div className="mb-6">
-                            <span className="text-4xl font-bold text-white">$0</span>
-                            <span className="text-neutral-500">/forever</span>
-                        </div>
-                        <ul className="space-y-4 mb-8 flex-1">
-                            <li className="flex items-center gap-2 text-neutral-300 text-sm">
-                                <Check className="w-4 h-4 text-green-500" /> Local LLM Support
-                            </li>
-                            <li className="flex items-center gap-2 text-neutral-300 text-sm">
-                                <Check className="w-4 h-4 text-green-500" /> Basic Code Analysis
-                            </li>
-                            <li className="flex items-center gap-2 text-neutral-300 text-sm">
-                                <Check className="w-4 h-4 text-green-500" /> Unlimited Chat
-                            </li>
-                            <li className="flex items-center gap-2 text-neutral-300 text-sm">
-                                <Check className="w-4 h-4 text-green-500" /> Community Support
-                            </li>
-                        </ul>
-                        <button className="w-full py-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition-colors">
-                            Download Now
-                        </button>
-                    </div>
-
-                    {/* Pro Plan (Highlighted) */}
-                    <div className="rounded-2xl border border-terminal-cyan/50 bg-neutral-900/80 p-8 flex flex-col relative overflow-hidden shadow-2xl shadow-terminal-cyan/10 transform md:-translate-y-4">
+                    <div className="w-full max-w-lg rounded-2xl border border-terminal-cyan/50 bg-neutral-900/50 p-8 flex flex-col relative overflow-hidden shadow-2xl shadow-terminal-cyan/10">
                         <div className="absolute top-0 right-0 bg-terminal-cyan text-black text-xs font-bold px-3 py-1 rounded-bl-lg">
-                            POPULAR
+                            OPEN SOURCE
                         </div>
                         <div className="mb-4">
-                            <h3 className="text-xl font-bold text-white">Pro</h3>
-                            <p className="text-neutral-400 text-sm mt-1">For power users</p>
+                            <h3 className="text-2xl font-bold text-white">Community Edition</h3>
+                            <p className="text-neutral-400 text-sm mt-1">Everything you need to run local AI</p>
                         </div>
                         <div className="mb-6">
-                            <span className="text-4xl font-bold text-white">$19</span>
-                            <span className="text-neutral-500">/month</span>
+                            <span className="text-5xl font-bold text-white">$0</span>
+                            <span className="text-neutral-500 text-xl">/forever</span>
                         </div>
                         <ul className="space-y-4 mb-8 flex-1">
-                            <li className="flex items-center gap-2 text-neutral-300 text-sm">
-                                <Check className="w-4 h-4 text-terminal-cyan" /> Everything in Community
+                            <li className="flex items-center gap-3 text-neutral-300">
+                                <Check className="w-5 h-5 text-terminal-cyan" />
+                                <span>Full Local LLM Support (Llama 3, Mistral, etc.)</span>
                             </li>
-                            <li className="flex items-center gap-2 text-neutral-300 text-sm">
-                                <Check className="w-4 h-4 text-terminal-cyan" /> GPT-4 & Claude 3 Access
+                            <li className="flex items-center gap-3 text-neutral-300">
+                                <Check className="w-5 h-5 text-terminal-cyan" />
+                                <span>Advanced Code Analysis & Refactoring</span>
                             </li>
-                            <li className="flex items-center gap-2 text-neutral-300 text-sm">
-                                <Check className="w-4 h-4 text-terminal-cyan" /> Cloud Sync
+                            <li className="flex items-center gap-3 text-neutral-300">
+                                <Check className="w-5 h-5 text-terminal-cyan" />
+                                <span>Unlimited Chat History</span>
                             </li>
-                            <li className="flex items-center gap-2 text-neutral-300 text-sm">
-                                <Check className="w-4 h-4 text-terminal-cyan" /> Priority Support
+                            <li className="flex items-center gap-3 text-neutral-300">
+                                <Check className="w-5 h-5 text-terminal-cyan" />
+                                <span>Zero Telemetry / 100% Privacy</span>
                             </li>
-                        </ul>
-                        <button className="w-full py-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition-colors">
-                            Get Pro
-                        </button>
-                    </div>
-
-                    {/* Enterprise Plan */}
-                    <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-8 flex flex-col relative overflow-hidden group hover:border-terminal-cyan/50 transition-colors">
-                        <div className="mb-4">
-                            <h3 className="text-xl font-bold text-white">Enterprise</h3>
-                            <p className="text-neutral-400 text-sm mt-1">For large teams</p>
-                        </div>
-                        <div className="mb-6">
-                            <span className="text-4xl font-bold text-white">Custom</span>
-                        </div>
-                        <ul className="space-y-4 mb-8 flex-1">
-                            <li className="flex items-center gap-2 text-neutral-300 text-sm">
-                                <Check className="w-4 h-4 text-green-500" /> SSO & Audit Logs
-                            </li>
-                            <li className="flex items-center gap-2 text-neutral-300 text-sm">
-                                <Check className="w-4 h-4 text-green-500" /> Custom Model Fine-tuning
-                            </li>
-                            <li className="flex items-center gap-2 text-neutral-300 text-sm">
-                                <Check className="w-4 h-4 text-green-500" /> On-premise Deployment
-                            </li>
-                            <li className="flex items-center gap-2 text-neutral-300 text-sm">
-                                <Check className="w-4 h-4 text-green-500" /> Dedicated Account Manager
+                            <li className="flex items-center gap-3 text-neutral-300">
+                                <Check className="w-5 h-5 text-terminal-cyan" />
+                                <span>Community Plugins & Themes</span>
                             </li>
                         </ul>
-                        <button className="w-full py-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition-colors">
-                            Contact Sales
-                        </button>
-                    </div>
 
+                        <Button
+                            borderRadius="1.75rem"
+                            className="bg-slate-900 text-white border-slate-800 font-bold w-full"
+                            onClick={() => document.getElementById('download')?.scrollIntoView({ behavior: 'smooth' })}
+                        >
+                            <div className="flex items-center justify-center gap-2">
+                                <span>Download Now</span>
+                                <ArrowRight className="w-4 h-4" />
+                            </div>
+                        </Button>
+                    </div>
                 </div>
             </div>
         </section>

@@ -7,10 +7,10 @@ export const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
 
     const navItems = [
-        { name: "Home", link: "#home" },
-        { name: "Features", link: "#features" },
-        { name: "Download", link: "#download" },
-        { name: "Docs", link: "docs.html" },
+        { name: "Home", link: "/" },
+        { name: "Features", link: "/#features" },
+        { name: "Download", link: "/#download" },
+        { name: "Docs", link: "/docs" },
     ];
 
     return (
