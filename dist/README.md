@@ -73,7 +73,7 @@ You can also use **Ollama** for local AI models without any API keys:
 - Make sure you have a stable internet connection
 - Try running the script again
 - Check if Python and pip are properly installed
-- Manually install dependencies: `pip install -r terminal/requirements.txt`
+- Manually install dependencies: `pip install -e .`
 
 ## Manual Installation
 
@@ -85,7 +85,7 @@ git clone https://github.com/KunjShah95/AETHER-AI.io.git
 cd AETHER-AI.io
 
 # Install dependencies
-pip install -r terminal/requirements.txt
+pip install -e .
 
 # Create configuration file
 cp .env.example .env

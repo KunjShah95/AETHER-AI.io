@@ -64,8 +64,13 @@ If checksums match the entries in `dist/SHA256SUMS.txt`, you can run the install
 git clone https://github.com/KunjShah95/NEXUS-AI.io.git
 cd NEXUS-AI.io
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (editable mode)
+pip install -e .
+
+# Or install with optional dependencies
+pip install -e .[all]  # All optional features
+pip install -e .[dev]  # Development tools only
+pip install -e .[huggingface]  # With Hugging Face models
 
 # Configure environment
 cp .env.example .env   # set your API keys; see below
@@ -190,7 +195,7 @@ Distribute the binary and provide instructions to set environment variables (or 
   - Install Python 3.9+ and ensure `python --version` works in your shell.
 - Dependencies fail to install:
   - `pip install --upgrade pip`
-  - `pip install -r requirements.txt --no-cache-dir`
+  - `pip install -e .`
 - API key errors:
   - Ensure `.env` exists and keys are valid; try a different provider with `/switch`.
 - Ollama issues:
@@ -208,9 +213,9 @@ NEXUS-AI.io/
 ├── app.js                    # Website functionality
 ├── styles.css                # Website styles
 ├── CHANGELOG.md              # Version history
+├── pyproject.toml            # Project metadata and dependencies
 ├── terminal/                 # Main application (CLI)
 │   ├── main.py               # Entry point
-│   ├── requirements.txt      # Dependencies
 │   ├── install_*.{bat,sh}    # OS installers (root also contains installers)
 │   └── tests/                # Unit tests
 ├── advanced_features.py
@@ -243,7 +248,7 @@ We welcome feature ideas, bug reports, and PRs.
 
 1. Fork the repo
 2. Create a branch: `git checkout -b feat/your-feature`
-3. Install deps: `pip install -r requirements.txt`
+3. Install deps: `pip install -e .[dev]`
 4. Commit and push: `git commit -m "feat: add your feature"`
 5. Open a Pull Request with a clear description and context
 

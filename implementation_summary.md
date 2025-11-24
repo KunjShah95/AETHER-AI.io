@@ -65,7 +65,7 @@ We have successfully integrated a wide range of advanced features into the Nexus
 ## 🛠️ Technical Details
 *   **Modular Architecture**: Each feature is implemented in its own module (`docker_manager.py`, `rag.py`, etc.) to maintain code cleanliness.
 *   **Lazy Loading**: Heavy dependencies are imported only when needed to keep startup fast.
-*   **Dependencies**: `requirements.txt` has been updated with all necessary packages (`textual`, `docker`, `beautifulsoup4`, `pypdf`, etc.).
+*   **Dependencies**: `pyproject.toml` contains all necessary packages (`textual`, `docker`, `beautifulsoup4`, `pypdf`, etc.) organized into core and optional dependencies.
 
 ## 🔜 Next Steps
 *   **Testing**: Thoroughly test each feature in your local environment.

@@ -99,8 +99,7 @@ git clone https://github.com/KunjShah95/NEXUS-AI.io.git
 cd NEXUS-AI.io
 
 # Install dependencies
-cd terminal
-pip install -r requirements.txt
+pip install -e .
 
 # Set up environment
 cp .env.example .env

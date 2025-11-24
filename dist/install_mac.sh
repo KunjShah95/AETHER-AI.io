@@ -110,13 +110,12 @@ echo -e "${GREEN}[INFO]${NC} Installing dependencies..."
 echo "This may take several minutes..."
 echo ""
 
-# Check if requirements.txt exists in terminal directory
-if [ -f "terminal/requirements.txt" ]; then
-    python3 -m pip install -r terminal/requirements.txt
-elif [ -f "requirements.txt" ]; then
-    python3 -m pip install -r requirements.txt
+# Install dependencies using pyproject.toml
+if [ -f "pyproject.toml" ]; then
+    echo -e "${GREEN}[INFO]${NC} Installing from pyproject.toml..."
+    python3 -m pip install -e .
 else
-    echo -e "${YELLOW}[WARNING]${NC} No requirements.txt found, installing basic dependencies..."
+    echo -e "${YELLOW}[WARNING]${NC} No pyproject.toml found, installing basic dependencies..."
     python3 -m pip install requests PyYAML rich python-dotenv google-generativeai groq ollama
 fi
 

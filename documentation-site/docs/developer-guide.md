@@ -28,7 +28,7 @@ We welcome contributions to NEXUS AI! This guide will help you set up your devel
 
 3.  **Install dependencies**:
     ```bash
-    pip install -r requirements.txt
+    pip install -e .[dev]
     ```
 
 4.  **Configure environment**:
@@ -50,9 +50,9 @@ NEXUS-AI.io/
 ├── app.js                    # Website functionality
 ├── styles.css                # Website styles
 ├── CHANGELOG.md              # Version history
+├── pyproject.toml            # Project metadata and dependencies
 ├── terminal/                 # Main application (CLI)
 │   ├── main.py               # Entry point
-│   ├── requirements.txt      # Dependencies
 │   ├── install_*.{bat,sh}    # OS installers
 │   └── tests/                # Unit tests
 ├── advanced_features.py      # Advanced features module

@@ -1,39 +1,74 @@
-# NEXUS AI Package Info
-
 Metadata-Version: 2.4
 Name: aetherai
 Version: 0.1.0
 Summary: AetherAI - Interactive terminal assistant
 Author: Nexus Maintainers
-License: MIT License
-
-        Copyright (c) 2025 KUNJ SHAH
-        
-        Permission is hereby granted, free of charge, to any person obtaining a copy
-        of this software and associated documentation files (the "Software"), to deal
-        in the Software without restriction, including without limitation the rights
-        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-        copies of the Software, and to permit persons to whom the Software is
-        furnished to do so, subject to the following conditions:
-        
-        The above copyright notice and this permission notice shall be included in all
-        copies or substantial portions of the Software.
-        
-        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-        SOFTWARE.
-        
+License: MIT
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: requests
-Requires-Dist: PyYAML
-Requires-Dist: rich
-Requires-Dist: python-dotenv
+Requires-Dist: google-generativeai==0.8.3
+Requires-Dist: groq==0.9.0
+Requires-Dist: openai==1.30.1
+Requires-Dist: ollama==0.3.1
+Requires-Dist: chromadb==1.1.1
+Requires-Dist: sentence-transformers==2.7.0
+Requires-Dist: PyPDF2==3.0.1
+Requires-Dist: beautifulsoup4==4.12.3
+Requires-Dist: textual==0.70.0
+Requires-Dist: rich==13.7.1
+Requires-Dist: SpeechRecognition==3.10.0
+Requires-Dist: pyttsx3==2.90
+Requires-Dist: docker==7.1.0
+Requires-Dist: schedule==1.2.2
+Requires-Dist: psutil==6.0.0
+Requires-Dist: python-dotenv==1.0.1
+Requires-Dist: pyyaml==6.0.1
+Requires-Dist: requests==2.32.3
+Requires-Dist: urllib3==2.2.2
+Requires-Dist: certifi==2024.6.2
+Requires-Dist: typing-extensions==4.12.2
+Requires-Dist: pydantic==2.7.4
+Requires-Dist: watchdog==4.0.1
+Requires-Dist: fastapi==0.111.0
+Requires-Dist: uvicorn==0.30.1
+Provides-Extra: huggingface
+Requires-Dist: transformers==4.41.2; extra == "huggingface"
+Requires-Dist: torch==2.6.0; extra == "huggingface"
+Requires-Dist: accelerate==0.30.1; extra == "huggingface"
+Requires-Dist: tokenizers==0.19.1; extra == "huggingface"
+Provides-Extra: databases
+Requires-Dist: psycopg2-binary==2.9.9; extra == "databases"
+Requires-Dist: mysql-connector-python==8.2.0; extra == "databases"
+Requires-Dist: pymongo==4.6.1; extra == "databases"
+Provides-Extra: dev
+Requires-Dist: pytest==8.2.2; extra == "dev"
+Requires-Dist: pytest-cov==4.1.0; extra == "dev"
+Requires-Dist: pytest-xdist==3.5.0; extra == "dev"
+Requires-Dist: pytest-html==4.1.1; extra == "dev"
+Requires-Dist: black==24.4.2; extra == "dev"
+Requires-Dist: flake8==7.0.0; extra == "dev"
+Requires-Dist: mypy==1.10.0; extra == "dev"
+Requires-Dist: pip-audit==2.6.3; extra == "dev"
+Provides-Extra: ml
+Requires-Dist: scikit-learn==1.5.0; extra == "ml"
+Provides-Extra: all
+Requires-Dist: transformers==4.41.2; extra == "all"
+Requires-Dist: torch==2.6.0; extra == "all"
+Requires-Dist: accelerate==0.30.1; extra == "all"
+Requires-Dist: tokenizers==0.19.1; extra == "all"
+Requires-Dist: psycopg2-binary==2.9.9; extra == "all"
+Requires-Dist: mysql-connector-python==8.2.0; extra == "all"
+Requires-Dist: pymongo==4.6.1; extra == "all"
+Requires-Dist: pytest==8.2.2; extra == "all"
+Requires-Dist: pytest-cov==4.1.0; extra == "all"
+Requires-Dist: pytest-xdist==3.5.0; extra == "all"
+Requires-Dist: pytest-html==4.1.1; extra == "all"
+Requires-Dist: black==24.4.2; extra == "all"
+Requires-Dist: flake8==7.0.0; extra == "all"
+Requires-Dist: mypy==1.10.0; extra == "all"
+Requires-Dist: pip-audit==2.6.3; extra == "all"
+Requires-Dist: scikit-learn==1.5.0; extra == "all"
 Dynamic: license-file
 
 # 🚀 NEXUS AI Terminal Assistant
@@ -71,32 +106,50 @@ Production‑ready, secure, multi‑model AI for your terminal. Switch between G
 
 Choose the option that fits your environment.
 
-### Option A: One‑click OS scripts
+### Option A: One‑click OS scripts (consolidated)
 
-- Windows (PowerShell or CMD):
-  - Minimal dependencies: `install_minimal.bat`
-  - Full feature set: `install_advanced.bat`
-  - Standard: `install.bat`
-- macOS: `bash install_mac.sh`
-- Linux: `bash install_linux.sh`
+- We now provide a single canonical installer per platform under `dist/`.
+- Recommended files:
+  - Windows: `dist/install_windows.bat`
+  - macOS: `dist/install_mac.sh`
+  - Linux: `dist/install_linux.sh`
+
+Before running an installer, verify the SHA256 checksum in `dist/SHA256SUMS.txt`:
+
+Windows (PowerShell):
+
+```powershell
+Get-FileHash -Algorithm SHA256 .\dist\install_windows.bat
+```
+
+macOS / Linux:
+
+```bash
+sha256sum dist/install_mac.sh
+```
+
+If checksums match the entries in `dist/SHA256SUMS.txt`, you can run the installer.
 
 ### Option B: From source (recommended for development)
 
 ```bash
-### Option B: From source (recommended for development)
+# Clone
+git clone https://github.com/KunjShah95/NEXUS-AI.io.git
+cd NEXUS-AI.io
 
-    # Clone
-    git clone https://github.com/KunjShah95/NEXUS-AI.io.git
-    cd NEXUS-AI.io
+# Install dependencies (editable mode)
+pip install -e .
 
-    # Install dependencies
-    pip install -r requirements.txt
+# Or install with optional dependencies
+pip install -e .[all]  # All optional features
+pip install -e .[dev]  # Development tools only
+pip install -e .[huggingface]  # With Hugging Face models
 
-    # Configure environment
-    cp .env.example .env   # set your API keys; see below
+# Configure environment
+cp .env.example .env   # set your API keys; see below
 
-    # Run
-    python terminal/main.py
+# Run
+python terminal/main.py
 ```
 
 ---
@@ -104,15 +157,11 @@ Choose the option that fits your environment.
 ## Configure API Keys
 
 Create and edit a `.env` file at the project root with the following variables:
-Create and edit a `.env` file at the project root with the following variables:
 
-    GEMINI_API_KEY=...
-    GROQ_API_KEY=...
-    HUGGINGFACE_TOKEN=...
-    OPENAI_API_KEY=...
-    MCP_API_KEY=...
-
-- Ollama does not require an API key but must be installed and the daemon running.
+```env
+GEMINI_API_KEY=...
+GROQ_API_KEY=...
+HUGGINGFACE_TOKEN=...
 OPENAI_API_KEY=...
 MCP_API_KEY=...
 ```
@@ -198,13 +247,9 @@ Troubleshooting:
 ---
 
 ## Packaging for Production
-Example with PyInstaller:
 
-    pip install pyinstaller
-    pyinstaller --onefile --name nexusai terminal/main.py
-    # Output will be in the dist/ directory as 'nexusai' (or nexusai.exe on Windows)
+You can ship a single-file binary for operators who don’t want Python on the host.
 
-Distribute the binary and provide instructions to set environment variables (or bundle an `.env`).
 Example with PyInstaller:
 
 ```bash
@@ -223,45 +268,40 @@ Distribute the binary and provide instructions to set environment variables (or 
   - Install Python 3.9+ and ensure `python --version` works in your shell.
 - Dependencies fail to install:
   - `pip install --upgrade pip`
-  - `pip install -r requirements.txt --no-cache-dir`
+  - `pip install -e .`
 - API key errors:
   - Ensure `.env` exists and keys are valid; try a different provider with `/switch`.
+- Ollama issues:
+  - Make sure the Ollama service is running and models are pulled. Test with `ollama list`.
+- Voice input:
+  - Requires optional `speech_recognition` (and OS-specific audio dependencies). If unavailable, `/voice` will show guidance.
+
+---
+
 ## Project Structure
 
-
-    ## Project Structure
-
-        NEXUS-AI.io/
-        ├── index.html                # Website homepage
-        ├── app.js                    # Website functionality
-        ├── styles.css                # Website styles
-        ├── CHANGELOG.md              # Version history
-        ├── terminal/                 # Main application (CLI)
-        │   ├── main.py               # Entry point
-        │   ├── requirements.txt      # Dependencies
-        │   ├── install_*.{bat,sh}    # OS installers (root also contains installers)
-        │   └── tests/                # Unit tests
-        ├── advanced_features.py
-        ├── analytics_monitor.py
-        ├── code_review_assistant.py
-        ├── context_aware_ai.py
-        ├── creative_tools.py
-        ├── games_learning.py
-        ├── advanced_security.py
-        ├── task_manager.py
-        ├── theme_manager.py
-        ├── integration_hub.py
-        └── README.md
-    ├── analytics_monitor.py
-    ├── code_review_assistant.py
-    ├── context_aware_ai.py
-    ├── creative_tools.py
-    ├── games_learning.py
-    ├── advanced_security.py
-    ├── task_manager.py
-    ├── theme_manager.py
-    ├── integration_hub.py
-    └── README.md
+```text
+NEXUS-AI.io/
+├── index.html                # Website homepage
+├── app.js                    # Website functionality
+├── styles.css                # Website styles
+├── CHANGELOG.md              # Version history
+├── pyproject.toml            # Project metadata and dependencies
+├── terminal/                 # Main application (CLI)
+│   ├── main.py               # Entry point
+│   ├── install_*.{bat,sh}    # OS installers (root also contains installers)
+│   └── tests/                # Unit tests
+├── advanced_features.py
+├── analytics_monitor.py
+├── code_review_assistant.py
+├── context_aware_ai.py
+├── creative_tools.py
+├── games_learning.py
+├── advanced_security.py
+├── task_manager.py
+├── theme_manager.py
+├── integration_hub.py
+└── README.md
 ```
 
 ---
@@ -281,7 +321,7 @@ We welcome feature ideas, bug reports, and PRs.
 
 1. Fork the repo
 2. Create a branch: `git checkout -b feat/your-feature`
-3. Install deps: `pip install -r requirements.txt`
+3. Install deps: `pip install -e .[dev]`
 4. Commit and push: `git commit -m "feat: add your feature"`
 5. Open a Pull Request with a clear description and context
 
@@ -293,6 +333,27 @@ MIT License — see [LICENSE](LICENSE)
 
 ---
 
+---
+
+## Deployment
+
+### Website Deployment
+
+The NEXUS AI website (frontend) is ready for deployment to Vercel:
+
+- **Quick Deploy**: [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/KunjShah95/NEXUS-AI.io)
+- **Detailed Guide**: See [DEPLOYMENT.md](DEPLOYMENT.md) for complete instructions
+- **Configuration**: All necessary files (`vercel.json`, optimized `vite.config.ts`) are included
+
+The website features:
+
+- Optimized production build with code splitting
+- SEO-ready with proper meta tags
+- SPA routing configured
+- Static asset caching
+
+---
+
 ## Support & Links
 
 - Website: [Project website](https://kunjshah95.github.io/NEXUS-AI.io/)
@@ -301,5 +362,6 @@ MIT License — see [LICENSE](LICENSE)
 - Security Policy: [SECURITY.md](SECURITY.md)
 - Code of Conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 - Contributing Guide: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Deployment Guide: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 If this project helps you, consider starring the repo. It helps others find it too.

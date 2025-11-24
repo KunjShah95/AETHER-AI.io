@@ -9,14 +9,103 @@ description = "AetherAI - Interactive terminal assistant"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [ { name = "Nexus Maintainers" } ]
-license = { file = "LICENSE" }
+license = { text = "MIT" }
 
 dependencies = [
-    "requests",
-    "PyYAML",
-    "rich",
-    "python-dotenv",
+    # Core AI APIs
+    "google-generativeai==0.8.3",
+    "groq==0.9.0",
+    "openai==1.30.1",
+    "ollama==0.3.1",
+    
+    # RAG & Knowledge Base
+    "chromadb==1.1.1",
+    "sentence-transformers==2.7.0",
+    "PyPDF2==3.0.1",
+    "beautifulsoup4==4.12.3",
+    
+    # Interface (TUI & CLI)
+    "textual==0.70.0",
+    "rich==13.7.1",
+    
+    # Voice & Audio
+    "SpeechRecognition==3.10.0",
+    "pyttsx3==2.90",
+    
+    # System & Utilities
+    "docker==7.1.0",
+    "schedule==1.2.2",
+    "psutil==6.0.0",
+    "python-dotenv==1.0.1",
+    "pyyaml==6.0.1",
+    "requests==2.32.3",
+    "urllib3==2.2.2",
+    "certifi==2024.6.2",
+    "typing-extensions==4.12.2",
+    "pydantic==2.7.4",
+    "watchdog==4.0.1",
+    
+    # Web Server
+    "fastapi==0.111.0",
+    "uvicorn==0.30.1",
+]
+
+[project.optional-dependencies]
+# Hugging Face (Optional/Heavy)
+huggingface = [
+    "transformers==4.41.2",
+    "torch==2.6.0",
+    "accelerate==0.30.1",
+    "tokenizers==0.19.1",
+]
+
+# Database Management (Optional - install as needed)
+databases = [
+    "psycopg2-binary==2.9.9",  # PostgreSQL
+    "mysql-connector-python==8.2.0",  # MySQL
+    "pymongo==4.6.1",  # MongoDB
+]
+
+# Development Tools
+dev = [
+    "pytest==8.2.2",
+    "pytest-cov==4.1.0",  # Coverage reporting
+    "pytest-xdist==3.5.0",  # Parallel testing
+    "pytest-html==4.1.1",  # HTML test reports
+    "black==24.4.2",
+    "flake8==7.0.0",
+    "mypy==1.10.0",
+    "pip-audit==2.6.3",  # Security auditing for pip
+]
+
+# Machine Learning
+ml = [
+    "scikit-learn==1.5.0",
+]
+
+# All optional dependencies
+all = [
+    "transformers==4.41.2",
+    "torch==2.6.0",
+    "accelerate==0.30.1",
+    "tokenizers==0.19.1",
+    "psycopg2-binary==2.9.9",
+    "mysql-connector-python==8.2.0",
+    "pymongo==4.6.1",
+    "pytest==8.2.2",
+    "pytest-cov==4.1.0",
+    "pytest-xdist==3.5.0",
+    "pytest-html==4.1.1",
+    "black==24.4.2",
+    "flake8==7.0.0",
+    "mypy==1.10.0",
+    "pip-audit==2.6.3",
+    "scikit-learn==1.5.0",
 ]
 
 [project.scripts]
 aetherai = "aetherai:main"
+
+[tool.setuptools.packages.find]
+include = ["aetherai*", "terminal*"]
+exclude = ["tests*", "frontend*", "extension*", "documentation-site*"]

@@ -18,10 +18,10 @@ Thank you for your interest in contributing to NEXUS AI Terminal Assistant! Your
 
 ## 🛠️ Development Setup
 
-- **Python 3.8+** is required.
+- **Python 3.9+** is required.
 - Install dependencies:
   ```bash
-  pip install -r requirements.txt
+  pip install -e .[dev]
   ```
 - Copy and configure environment variables:
   ```bash

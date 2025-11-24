@@ -103,13 +103,12 @@ echo [INFO] Installing dependencies...
 echo This may take several minutes...
 echo.
 
-REM Check if requirements.txt exists in terminal directory
-if exist "terminal\requirements.txt" (
-    python -m pip install -r terminal\requirements.txt
-) else if exist "requirements.txt" (
-    python -m pip install -r requirements.txt
+REM Install dependencies using pyproject.toml
+if exist "pyproject.toml" (
+    echo [INFO] Installing from pyproject.toml...
+    python -m pip install -e .
 ) else (
-    echo [WARNING] No requirements.txt found, installing basic dependencies...
+    echo [WARNING] No pyproject.toml found, installing basic dependencies...
     python -m pip install requests PyYAML rich python-dotenv google-generativeai groq ollama
 )
 

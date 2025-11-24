@@ -28,7 +28,7 @@ git clone https://github.com/KunjShah95/NEXUS-AI.io.git
 cd NEXUS-AI.io
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -e .
 
 # Configure environment
 cp .env.example .env   # set your API keys; see below

@@ -53,4 +53,4 @@ underlying flow stays stable.
 ---
 
 > ℹ️ The extension assumes the workspace root contains the `terminal/main.py` entry point.
-> Make sure the CLI dependencies from the repository are installed (`pip install -r terminal/requirements.txt`).
+> Make sure the CLI dependencies from the repository are installed (`pip install -e .`).
