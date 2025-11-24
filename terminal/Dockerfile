@@ -25,5 +25,5 @@ RUN pip install -e .
 # Set working directory to terminal for tests
 WORKDIR /app/terminal
 
-# Default command to run the application
-CMD ["aetherai", "--help"]
+# Default command - make container interactive by default
+CMD ["bash"]
