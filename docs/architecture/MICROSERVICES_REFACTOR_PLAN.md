@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document outlines the plan to refactor the AETHER-AI backend from a monolithic Python application into a microservices-oriented architecture. The current monolithic design consolidates all functionality within a single `terminal/main.py` entry point (3500+ lines) with 34 supporting modules, making it difficult to scale, maintain, and deploy independently.
+This document outlines the plan to refactor the AETHER-AI backend from a monolithic Python application into a microservices-oriented architecture. The current monolithic design consolidates all functionality within a single `terminal/main.py` entry point (approximately 3,500 lines) with 34 supporting modules, making it difficult to scale, maintain, and deploy independently.
 
 **Document Version:** 1.0  
 **Last Updated:** 2025-11-24  

@@ -241,9 +241,10 @@ Create RabbitMQ configuration:
 
 ```python
 # shared/messaging/rabbitmq.py
-import pika
-from typing import Callable
 import json
+from typing import Callable
+
+import pika
 
 class MessageBus:
     def __init__(self, host='localhost', port=5672, username='admin', password='admin'):
@@ -653,7 +654,7 @@ EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD python -c "import requests; requests.get('http://localhost:8000/health')"
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
 
 # Run application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

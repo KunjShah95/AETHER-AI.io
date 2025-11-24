@@ -129,17 +129,16 @@ Legend: ✅ Complete | 🔄 In Progress | ⏳ Pending | ⚠️ Blocked
        ├─► Security (Auth, AuthZ)
        ├─► Docker Manager
        └─► RAG Service (Semantic Search)
-       
-       │
-       ▼
-┌──────────────┐
-│ Message Bus  │ ◄── Event-driven communication
-└──────────────┘
-       │
-       ▼
-┌──────────────┐
-│  Databases   │ ◄── PostgreSQL, MongoDB, Redis, ChromaDB
-└──────────────┘
+             │
+             ▼
+       ┌──────────────┐
+       │ Message Bus  │ ◄── Event-driven communication
+       └──────┬───────┘
+              │
+              ▼
+       ┌──────────────┐
+       │  Databases   │ ◄── PostgreSQL, MongoDB, Redis, ChromaDB
+       └──────────────┘
 ```
 
 ## Technology Stack
