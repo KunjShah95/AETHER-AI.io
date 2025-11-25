@@ -1,4 +1,0 @@
-requests
-PyYAML
-rich
-python-dotenv

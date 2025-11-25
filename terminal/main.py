@@ -70,6 +70,9 @@ try:
     from terminal.package_manager_integration import PackageManager
     from terminal.test_runner import TestRunner
     from terminal.file_watcher import FileWatcher
+    from terminal.cloud_integration import CloudIntegration
+    from terminal.blockchain import BlockchainManager
+    from terminal.ml_ops import MLOpsManager
 except ImportError:
     try:
         from context_aware_ai import ContextAwareAI
@@ -92,6 +95,9 @@ except ImportError:
         from package_manager_integration import PackageManager
         from test_runner import TestRunner
         from file_watcher import FileWatcher
+        from cloud_integration import CloudIntegration
+        from blockchain import BlockchainManager
+        from ml_ops import MLOpsManager
     except ImportError:
         ContextAwareAI = None
         AnalyticsMonitor = None
@@ -113,14 +119,34 @@ except ImportError:
         PackageManager = None
         TestRunner = None
         FileWatcher = None
+        CloudIntegration = None
+        BlockchainManager = None
+        MLOpsManager = None
 
 # Cache for Ollama model list to avoid repeated expensive calls.
 from functools import lru_cache
+import subprocess
+
+def run_cli_list() -> str:
+    """Run 'ollama list' command via subprocess."""
+    try:
+        # Try running ollama list
+        # Use shell=True on Windows if needed, but list is usually safe
+        result = subprocess.run(['ollama', 'list'], capture_output=True, text=True, timeout=10)
+        if result.returncode == 0:
+            return result.stdout
+    except FileNotFoundError:
+        logging.warning("Ollama CLI not found in PATH")
+    except Exception as e:
+        logging.error(f"Error running ollama list: {e}")
+    return ""
+
 @lru_cache(maxsize=1)
 def _get_ollama_models_list() -> list[str]:
     """Retrieve Ollama models once per process run."""
     models = []
-    # Try Python client first
+    
+    # 1. Try Python client first
     try:
         res = ollama.list()
         if hasattr(res, 'models'):
@@ -142,34 +168,29 @@ def _get_ollama_models_list() -> list[str]:
             else:
                 name = str(m)
             models.append(name)
-    except Exception:
-        pass
+            
+        if models:
+            return models
+            
+    except Exception as e:
+        logging.warning(f"Ollama Python client failed: {e}")
 
-    if models:
-        return models
-
-    # Fallback to CLI
+    # 2. Fallback to CLI
     try:
         raw = run_cli_list()
-        parsed = parse_ollama_list_output(raw)
-        for r in parsed:
-            for k in r:
-                if k.strip().upper() == 'NAME':
-                    val = r[k].strip()
-                    if val:
-                        models.append(val)
-                    break
-        # Heuristic fallback
-        if not models and raw:
-             for line in raw.splitlines():
-                line = line.strip()
-                if not line or (line.upper().startswith('NAME') and 'SIZE' in line.upper()):
-                    continue
+        if raw:
+            lines = raw.strip().splitlines()
+            # Skip header if present
+            if lines and lines[0].upper().startswith("NAME"):
+                lines = lines[1:]
+            
+            for line in lines:
                 parts = line.split()
                 if parts:
                     models.append(parts[0])
-    except Exception:
-        pass
+                    
+    except Exception as e:
+        logging.error(f"Ollama CLI parsing failed: {e}")
     
     return models
 
@@ -896,7 +917,11 @@ class NexusAI:
         self.docker_manager = DockerManager() if DockerManager else None
         self.snippet_manager = SnippetManager() if SnippetManager else None
         self.persona_manager = PersonaManager() if PersonaManager else None
+        self.persona_manager = PersonaManager() if PersonaManager else None
         self.network_tools = NetworkTools() if NetworkTools else None
+        self.cloud_integration = CloudIntegration() if CloudIntegration else None
+        self.blockchain = BlockchainManager() if BlockchainManager else None
+        self.ml_ops = MLOpsManager() if MLOpsManager else None
         
         # Update console theme if theme manager is available
         if self.theme_manager:
@@ -3446,18 +3471,58 @@ class NexusAI:
                         return f" Error running games: {e}"
                 return " Games module not available"
 
+            # --- Cloud Integration ---
+            if cmd.startswith("cloud "):
+                if not self.cloud_integration:
+                    return "❌ Cloud Integration module not available"
+                parts = command.split(maxsplit=2)
+                action = parts[1] if len(parts) > 1 else "status"
+                if action == "status":
+                    return self.cloud_integration.get_status()
+                if action == "connect" and len(parts) == 3:
+                    # Usage: /cloud connect aws
+                    return self.cloud_integration.connect(parts[2], "credentials.json")
+                if action == "deploy" and len(parts) == 3:
+                    return self.cloud_integration.deploy("app", parts[2])
+                return "Usage: /cloud [status|connect <provider>|deploy <path>]"
+
+            # --- Blockchain ---
+            if cmd.startswith("web3 "):
+                if not self.blockchain:
+                    return "❌ Blockchain module not available"
+                parts = command.split(maxsplit=2)
+                action = parts[1] if len(parts) > 1 else "balance"
+                if action == "create-wallet" and len(parts) == 3:
+                    return self.blockchain.create_wallet(parts[2])
+                if action == "balance" and len(parts) == 3:
+                    return self.blockchain.get_balance(parts[2])
+                if action == "deploy" and len(parts) == 3:
+                    return self.blockchain.deploy_contract(parts[2])
+                return "Usage: /web3 [create-wallet <name>|balance <addr>|deploy <file>]"
+
+            # --- ML Ops ---
+            if cmd.startswith("ml "):
+                if not self.ml_ops:
+                    return "❌ ML Ops module not available"
+                parts = command.split(maxsplit=2)
+                action = parts[1] if len(parts) > 1 else "list"
+                if action == "list":
+                    return self.ml_ops.list_models()
+                if action == "train" and len(parts) == 3:
+                    return self.ml_ops.train_model("new_model", parts[2])
+                if action == "evaluate" and len(parts) == 3:
+                    return self.ml_ops.evaluate_model(parts[2])
+                return "Usage: /ml [list|train <data>|evaluate <model>]"
+
         except Exception as e:
             logging.error(f"Command handling error: {str(e)}")
             return " Command processing error"
+# --- Main Loop ---
 # --- Main Loop ---
 def run_cli_mode() -> int:
     """Run in headless CLI mode for VS Code extension."""
     try:
         nexus = NexusAI(quiet=True)
-        # Signal that we are ready (extension looks for "Assistant starting…")
-        # But the extension logs whatever we print.
-        # The extension sends commands via stdin and logs stdout.
-        
         while True:
             try:
                 line = sys.stdin.readline()
@@ -3466,8 +3531,6 @@ def run_cli_mode() -> int:
                 line = line.strip()
                 if not line:
                     continue
-                
-                # Process input
                 response = nexus.process_input(line)
                 print(response)
                 sys.stdout.flush()
@@ -3481,22 +3544,68 @@ def run_cli_mode() -> int:
         print(f"Fatal CLI error: {e}")
         return 1
 
+def run_interactive_mode() -> int:
+    """Run interactive mode with prompt_toolkit"""
+    try:
+        from prompt_toolkit import PromptSession
+        from prompt_toolkit.history import FileHistory
+        from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+        from prompt_toolkit.styles import Style
+        
+        nexus = NexusAI()
+        
+        # Setup history
+        history_file = os.path.join(os.path.expanduser("~"), ".nexus", "history.txt")
+        os.makedirs(os.path.dirname(history_file), exist_ok=True)
+        
+        session = PromptSession(
+            history=FileHistory(history_file),
+            auto_suggest=AutoSuggestFromHistory(),
+        )
+        
+        style = Style.from_dict({
+            'prompt': '#00aa00 bold',
+        })
+        
+        while True:
+            try:
+                user_input = session.prompt(
+                    [('class:prompt', f"[{nexus.current_model.upper()}] > ")],
+                    style=style
+                )
+                
+                if not user_input.strip():
+                    continue
+                    
+                if user_input.lower() in ('exit', 'quit', '/exit', '/quit'):
+                    console.print("[yellow]Goodbye![/yellow]")
+                    break
+                
+                response = nexus.process_input(user_input)
+                console.print(response)
+                
+            except KeyboardInterrupt:
+                continue
+            except EOFError:
+                break
+            except Exception as e:
+                console.print(f"[red]Error: {e}[/red]")
+                
+        return 0
+    except ImportError:
+        print("prompt_toolkit not installed. Please run: pip install prompt_toolkit")
+        return 1
+    except Exception as e:
+        print(f"Fatal error: {e}")
+        return 1
+
 def main() -> int:
     """Start the interactive Aether AI terminal. Returns exit code."""
     if "--cli" in sys.argv:
         return run_cli_mode()
 
-    try:
-        # Import and run the TUI application
-        from terminal.tui_app import NexusTUI
-        app = NexusTUI()
-        app.run()
-        return 0
-        
-    except Exception as e:
-        logging.critical(f"Fatal error: {str(e)}")
-        print(f"Critical error: {str(e)}")
-        return 1
+    # Default to interactive CLI with prompt_toolkit
+    return run_interactive_mode()
 
 
 if __name__ == "__main__":
